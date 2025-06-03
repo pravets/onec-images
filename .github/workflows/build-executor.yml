@@ -37,7 +37,7 @@ jobs:
             --secret id=dev1c_executor_api_key,src=/tmp/dev1c_executor_api_key.txt \
             --pull \
             --build-arg EXECUTOR_VERSION="$EXECUTOR_VERSION" \
-            -t $DOCKER_REGISTRY_URL/executor:$executor_version \
+            -t $DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION \
             -f ./src/executor/Dockerfile \
             .
 
