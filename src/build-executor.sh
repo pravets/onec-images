@@ -13,7 +13,7 @@ source "${SCRIPT_DIR}/../scripts/docker_login.sh"
 source "${SCRIPT_DIR}/../scripts/prepare_executor_api_key.sh"
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
-if [[ $DOCKER_SYSTEM_PRUNE = "true" ]] ;
+if [[ "${DOCKER_SYSTEM_PRUNE:-}" = "true" ]] ;
 then
     docker system prune -af
 fi
