@@ -23,17 +23,27 @@ jobs:
           username: ${{ secrets.DOCKER_LOGIN }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set DEV1C_EXECUTOR_API_KEY env
-        run: echo "DEV1C_EXECUTOR_API_KEY=${{ secrets.DEV1C_EXECUTOR_API_KEY }}" >> "$GITHUB_ENV"
+      - name: Set environment variables
+        run: |
+          echo "DEV1C_EXECUTOR_API_KEY=${{ secrets.DEV1C_EXECUTOR_API_KEY }}" >> "$GITHUB_ENV"
+          echo "DOCKER_REGISTRY_URL=${{ secrets.DOCKER_REGISTRY_URL }}" >> "$GITHUB_ENV"
 
       - name: Build Docker image
         run: |
           export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
-          docker build \
-            --build-arg "EXECUTOR_VERSION=$EXECUTOR_VERSION" \
-            -t "${{ secrets.DOCKER_REGISTRY_URL }}/executor:${EXECUTOR_VERSION}" \
+            echo "Собираем executor версии ${EXECUTOR_VERSION}"
+            ./scripts/prepare_executor_api_key.sh
+            DOCKER_BUILDKIT=1 docker build \
+            --secret id=dev1c_executor_api_key,src="/tmp/dev1c_executor_api_key.txt" \
+            --pull \
+            --build-arg EXECUTOR_VERSION="$EXECUTOR_VERSION" \
+            -t "$DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION" \
             -f ./src/executor/Dockerfile \
             .
+      - name: Test Docker image
+        run: |
+          export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
+          ./tests/test-executor.sh
 
       - name: Push Docker image
         run: |
