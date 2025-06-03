@@ -8,12 +8,12 @@ else
 	echo "The script is running in CI";
 fi
 
-./scripts/docker_login.sh
-./scripts/prepare_executor_api_key.sh
+source ./scripts/docker_login.sh
+source ./scripts/prepare_executor_api_key.sh
+source ./tools/assert.sh
 
 if [[ $DOCKER_SYSTEM_PRUNE = "true" ]] ;
 then
-
     docker system prune -af
 fi
 
@@ -32,6 +32,12 @@ DOCKER_BUILDKIT=1 docker build \
     -f ./src/executor/Dockerfile \
     $last_arg
 
-docker push $DOCKER_REGISTRY_URL/executor:$executor_version
-
-source ./scripts/cleanup.sh
+if ./tests/test-executor.sh; then
+    docker push $DOCKER_REGISTRY_URL/executor:$executor_version
+    source ./scripts/cleanup.sh
+else
+    log_failure "ERROR: Tests failed. Docker image will not be pushed."
+    source ./scripts/cleanup.sh
+    exit 1
+fi
+exit 0
