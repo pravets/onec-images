@@ -1,14 +1,16 @@
 #!/bin/bash
 set -e
 
-if [ -z ${CI} ]; then
-        echo "The script is not running in CI"
-        source .env
+if [ -z "${CI-}" ]; then
+  echo "The script is not running in CI"
+  source .env
 else
-        echo "The script is running in CI";
+  echo "The script is running in CI"
 fi
 
-source "./tools/assert.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+source "${SCRIPT_DIR}/../tools/assert.sh"
 
 test_executor_version() {
   log_header "Test :: executor version"
