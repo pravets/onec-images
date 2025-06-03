@@ -30,12 +30,12 @@ jobs:
         run: |
           export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
           docker build \
-            --build-arg EXECUTOR_VERSION=$EXECUTOR_VERSION \
-            -t ${{ secrets.DOCKER_REGISTRY_URL }}/executor:$EXECUTOR_VERSION \
+            --build-arg "EXECUTOR_VERSION=$EXECUTOR_VERSION" \
+            -t "${{ secrets.DOCKER_REGISTRY_URL }}/executor:${EXECUTOR_VERSION}" \
             -f ./src/executor/Dockerfile \
             .
 
       - name: Push Docker image
         run: |
           export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
-          docker push ${{ secrets.DOCKER_REGISTRY_URL }}/executor:$EXECUTOR_VERSION
+          docker push "${{ secrets.DOCKER_REGISTRY_URL }}/executor:${EXECUTOR_VERSION}"
