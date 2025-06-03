@@ -29,9 +29,11 @@ jobs:
       - name: Build Docker image
         run: |
           export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
-          docker build \
-            --build-arg "EXECUTOR_VERSION=$EXECUTOR_VERSION" \
-            -t "${{ secrets.DOCKER_REGISTRY_URL }}/executor:${EXECUTOR_VERSION}" \
+          DOCKER_BUILDKIT=1 docker build \
+            --secret id=dev1c_executor_api_key,src=/tmp/dev1c_executor_api_key.txt \
+            --pull \
+            --build-arg EXECUTOR_VERSION="$EXECUTOR_VERSION" \
+            -t $DOCKER_REGISTRY_URL/executor:$executor_version \
             -f ./src/executor/Dockerfile \
             .
 

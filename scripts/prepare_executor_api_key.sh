@@ -8,5 +8,5 @@ fi
 
 # Записываем значение переменной в файл
 umask 077
-echo -n "$DEV1C_EXECUTOR_API_KEY" > dev1c_executor_api_key.txt
-echo "Ключ успешно записан в dev1c_executor_api_key.txt"
+echo -n "$DEV1C_EXECUTOR_API_KEY" > /tmp/dev1c_executor_api_key.txt
+echo "Ключ успешно записан в /tmp/dev1c_executor_api_key.txt"
