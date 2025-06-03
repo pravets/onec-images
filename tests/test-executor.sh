@@ -12,6 +12,21 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+# Проверяет, соответствует ли версия Docker-образа executor ожидаемому формату.
+#
+# Использует переменные окружения EXECUTOR_VERSION и DOCKER_REGISTRY_URL для формирования ожидаемой и фактической версии.
+# Сравнивает версию, полученную из вывода контейнера, с ожидаемой строкой, преобразованной из EXECUTOR_VERSION.
+#
+# Globals:
+#   EXECUTOR_VERSION - версия executor, используемая для проверки.
+#   DOCKER_REGISTRY_URL - адрес реестра Docker, из которого берётся образ.
+#
+# Outputs:
+#   Выводит сообщения об успехе или неудаче теста в STDOUT.
+#
+# Example:
+#
+#   test_executor_version
 test_executor_version() {
   log_header "Test :: executor version"
 
