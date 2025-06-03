@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 
 # Удаление файла с ключом
 rm -f dev1c_executor_api_key.txt
