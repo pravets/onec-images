@@ -23,7 +23,7 @@ if [[ $NO_CACHE = "true" ]] ; then
 	last_arg="--no-cache ."
 fi
 
-[[ -z "${EXECUTOR_VERSION:-}" ]] && log_failure "Переменная EXECUTOR_VERSION не задана"
+[[ -z "${EXECUTOR_VERSION:-}" ]] && { log_failure "Переменная EXECUTOR_VERSION не задана"; exit 1; }
 executor_version=$EXECUTOR_VERSION
 
 DOCKER_BUILDKIT=1 docker build \
