@@ -24,7 +24,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Set DEV1C_EXECUTOR_API_KEY env
-        run: echo "DEV1C_EXECUTOR_API_KEY=${{ secrets.DEV1C_EXECUTOR_API_KEY }}" >> $GITHUB_ENV
+        run: echo "DEV1C_EXECUTOR_API_KEY=${{ secrets.DEV1C_EXECUTOR_API_KEY }}" >> "$GITHUB_ENV"
 
       - name: Build Docker image
         run: |
