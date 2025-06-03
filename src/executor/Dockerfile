@@ -35,9 +35,10 @@ ENV LANG=ru_RU.UTF-8
 
 # Install Executor (используем BuildKit secret)
 RUN --mount=type=secret,id=dev1c_executor_api_key \
-  curl --fail -o executor.zip \
+  curl -sSL --fail \
     -H "X-Developer-1c-Api:$(cat /run/secrets/dev1c_executor_api_key)" \
-    -OJ https://developer.1c.ru/applications/Console/api/v1/download/executor/${EXECUTOR_VERSION}/linux \
+    -o executor.zip \
+    https://developer.1c.ru/applications/Console/api/v1/download/executor/${EXECUTOR_VERSION}/linux \
   && unzip executor.zip \
   && rm executor.zip \
   && mkdir /opt/executor \
