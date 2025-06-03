@@ -40,6 +40,10 @@ jobs:
             -t $DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION \
             -f ./src/executor/Dockerfile \
             .
+      - name: Test Docker image
+        run: |
+          export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
+          ./tests/test-executor.sh
 
       - name: Push Docker image
         run: |
