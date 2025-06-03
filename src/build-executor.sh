@@ -34,7 +34,7 @@ DOCKER_BUILDKIT=1 docker build \
     -f "${SCRIPT_DIR}/../src/executor/Dockerfile" \
     $last_arg
 
-shred -u /tmp/dev1c_executor_api_key.txt
+shred -fzu "/tmp/dev1c_executor_api_key.txt" || true
 
 if ./tests/test-executor.sh; then
     docker push $DOCKER_REGISTRY_URL/executor:$executor_version
