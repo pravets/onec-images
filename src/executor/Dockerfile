@@ -9,12 +9,6 @@ LABEL author="Iosif Pravets"
 
 ARG EXECUTOR_VERSION
 
-# Устанавливаем необходимые зависимости
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /tmp
 
 RUN apt-get update \
