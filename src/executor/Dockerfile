@@ -35,11 +35,11 @@ RUN --mount=type=secret,id=dev1c_executor_api_key \
     https://developer.1c.ru/applications/Console/api/v1/download/executor/${EXECUTOR_VERSION}/linux \
   && unzip executor.zip \
   && rm executor.zip \
-  && mkdir /opt/executor \
-  && cp -R * /opt/executor \
+  && mkdir -p /opt/1C/executor \
+  && cp -R * /opt/1C/executor \
 # cleanup
   && rm -rf /tmp/* \
   && apt purge -y unzip
 
-ENV PATH="/opt/executor:$PATH"
-ENTRYPOINT ["/opt/executor/executor"]
+ENV PATH="/opt/1C/executor:$PATH"
+ENTRYPOINT ["/opt/1C/executor/executor"]
