@@ -13,9 +13,9 @@ ARG EDT_VERSION
 
 WORKDIR /tmp
 
-RUN --mount=type=secret,id=ONEC_USERNAME \
+RUN --mount=type=secret,id=onec_username \
     export YARD_RELEASES_USER=$(cat /tmp/onec_username) && \
-    --mount=type=secret,id=ONEC_PASSWORD && \
+    --mount=type=secret,id=onec_password && \
     export YARD_RELEASES_PWD=$(cat /tmp/onec_password) && \
     /app/downloader.sh edt "$EDT_VERSION"
 

@@ -44,8 +44,8 @@ DOCKERFILE_NAME="${MAJOR_VERSION}.Dockerfile"
 
 DOCKER_BUILDKIT=1 docker build \
     --pull \
-    --secret id=onec_username,src=/tmp/onec_username.txt \
-    --secret id=onec_password,src=/tmp/onec_password.txt \
+    --secret id=onec_username,src=/tmp/onec_username \
+    --secret id=onec_password,src=/tmp/onec_password \
     --build-arg EDT_VERSION="$EDT_VERSION" \
     -t $DOCKER_REGISTRY_URL/edt:$edt_version \
     -f "${SCRIPT_DIR}/../src/edt/${DOCKERFILE_NAME}" \
