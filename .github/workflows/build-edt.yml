@@ -8,6 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
 
     steps:
       - name: Checkout repository
@@ -15,11 +21,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Set environment variables
-        run: |
-          echo "ONEC_USERNAME=${{ secrets.ONEC_USERNAME }}" >> "$GITHUB_ENV"
-          echo "ONEC_PASSWORD=${{ secrets.ONEC_PASSWORD }}" >> "$GITHUB_ENV"
 
       - name: Build and push Docker image
         run: |
