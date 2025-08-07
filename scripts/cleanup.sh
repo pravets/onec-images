@@ -4,6 +4,8 @@ set -euo pipefail
 
 # Удаление файла с ключом
 rm -f dev1c_executor_api_key.txt
+rm -f /tmp/onec_username
+rm -f /tmp/onec_password
 
 # Разлогинивание из Docker
 if [ -n "$DOCKER_REGISTRY_URL" ]; then

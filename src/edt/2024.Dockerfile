@@ -9,16 +9,15 @@ ARG DOCKER_REGISTRY_URL=library
 
 FROM ${DOWNLOADER_REGISTRY_URL}/${DOWNLOADER_IMAGE}:${DOWNLOADER_TAG} AS downloader
 
-ARG ONEC_USERNAME
-ARG ONEC_PASSWORD
 ARG EDT_VERSION
-
-ENV YARD_RELEASES_USER=${ONEC_USERNAME}
-ENV YARD_RELEASES_PWD=${ONEC_PASSWORD}
 
 WORKDIR /tmp
 
-RUN /app/downloader.sh edt "$EDT_VERSION"
+RUN --mount=type=secret,id=ONEC_USERNAME \
+    export YARD_RELEASES_USER=$(cat /tmp/ONEC_USERNAME) && \
+    --mount=type=secret,id=ONEC_PASSWORD && \
+    export YARD_RELEASES_PWD=$(cat /tmp/ONEC_PASSWORD) && \
+    /app/downloader.sh edt "$EDT_VERSION"
 
 FROM ${BASE_IMAGE}:${BASE_TAG} AS installer
 

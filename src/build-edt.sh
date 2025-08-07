@@ -10,6 +10,7 @@ else
 fi
 
 source "${SCRIPT_DIR}/../scripts/docker_login.sh"
+source "${SCRIPT_DIR}/../scripts/prepare_onec_credentials.sh"
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
 if [[ "${DOCKER_SYSTEM_PRUNE:-}" = "true" ]] ;
@@ -43,9 +44,9 @@ DOCKERFILE_NAME="${MAJOR_VERSION}.Dockerfile"
 
 DOCKER_BUILDKIT=1 docker build \
     --pull \
+    --secret id=onec_username,src=/tmp/onec_username.txt \
+    --secret id=onec_password,src=/tmp/onec_password.txt \
     --build-arg EDT_VERSION="$EDT_VERSION" \
-    --build-arg ONEC_USERNAME="$ONEC_USERNAME" \
-    --build-arg ONEC_PASSWORD="$ONEC_PASSWORD" \
     -t $DOCKER_REGISTRY_URL/edt:$edt_version \
     -f "${SCRIPT_DIR}/../src/edt/${DOCKERFILE_NAME}" \
     $last_arg
