@@ -63,6 +63,10 @@
      - либо инлайном при запуске: `EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh`
   3. Запустите сборку: `./src/build-executor.sh`.
 
+  - без публикации в реестр (локальная проверка):
+    - один запуск: `PUSH_IMAGE=false EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh`
+    - либо через `.env`: `PUSH_IMAGE=false`
+
 - Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION`.
 
 [↑ Наверх](#onec-images)
