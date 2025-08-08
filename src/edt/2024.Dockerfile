@@ -35,6 +35,8 @@ RUN apt-get update \
     # edt dependencies
     libgtk-3-0 \
     locales \
+    ca-certificates \
+  && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
     /var/cache/debconf \
@@ -47,24 +49,24 @@ COPY --from=downloader /tmp/${downloads} /tmp/${downloads}
 WORKDIR /tmp/${downloads}
 
 RUN chmod +x ./1ce-installer-cli \
-  && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings\
-  && ln -s $(dirname $(find /opt/1C/1CE -name ring)) /opt/1C/1CE/components/1c-enterprise-ring \
-  && ln -s $(dirname $(find /opt/1C/1CE -name 1cedt)) /opt/1C/1CE/components/1cedt \
-  && rm -rf \
-    /tmp/* 
+  && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings && \
+  ln -s "$(dirname "$(find /opt/1C/1CE -type f -name ring -print -quit)")" /opt/1C/1CE/components/1c-enterprise-ring && \
+  ln -s "$(dirname "$(find /opt/1C/1CE -type f -name 1cedt -print -quit)")" /opt/1C/1CE/components/1cedt && \
+  rm -rf /tmp/*
 
 # Install Disable Editing Plugin
 ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20250410-2002
 RUN /opt/1C/1CE/components/1cedt/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION}
 # cleanup
-RUN rm -f $edt_path/configuration/*.log \
-  && rm -rf $edt_path/configuration/org.eclipse.core.runtime \
-  && rm -rf $edt_path/configuration/org.eclipse.osgi \
-  && rm -rf $edt_path/plugin-development \
-  && rm -f $edt_path/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
-  && rm -f $edt_path/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
-  && rm -f $edt_path/plugins/org.eclipse.egit.doc_*.jar \
-  && rm -f $edt_path/plugins/org.eclipse.platform.doc_*.jar \
+RUN rm -f /opt/1C/1CE/components/1cedt/configuration/*.log \
+  && rm -rf /opt/1C/1CE/components/1cedt/configuration/org.eclipse.core.runtime \
+  && rm -rf /opt/1C/1CE/components/1cedt/configuration/org.eclipse.osgi \
+  && rm -rf /opt/1C/1CE/components/1cedt/plugin-development \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.platform.doc_v8_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.egit.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.platform.doc_*.jar \
   && rm -rf /tmp/*
 
 FROM ${BASE_IMAGE}:${BASE_TAG}
@@ -75,11 +77,10 @@ WORKDIR /tmp
 
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-    # downloader dependencies
-    curl \
-    # edt dependencies
     libgtk-3-0 \
     locales \
+    ca-certificates \
+  && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
     /var/cache/debconf \
