@@ -63,6 +63,7 @@ RUN rm -f /opt/1C/1CE/components/1cedt/configuration/*.log \
   && rm -rf /opt/1C/1CE/components/1cedt/configuration/org.eclipse.osgi \
   && rm -rf /opt/1C/1CE/components/1cedt/plugin-development \
   && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.platform.doc_v8_*.jar \
   && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
   && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.egit.doc_*.jar \
   && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.platform.doc_*.jar \
