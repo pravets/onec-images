@@ -7,6 +7,7 @@
     - [Сборка через GitHub Actions](#сборка-через-github-actions)
     - [Локальная сборка](#локальная-сборка)
 - [1С:Исполнитель](#1сисполнитель)
+- [1С:EDT](#1сedt)
 
 ## Как собрать образы
 
@@ -47,5 +48,33 @@
 Триггером для сборки в Actions является тег вида `executor_ВерсияДляСборки`, например `executor_3.0.2.2`.
 
 Скрипт для локальной сборки — `build-oscript.sh`.
+
+[↑ Наверх](#onec-images)
+
+## 1С:EDT
+
+Для сборки требуется доступ к сайту релизов 1С для скачивания установщика EDT. Данные учётной записи необходимо передать через переменные среды/секреты `ONEC_USERNAME` и `ONEC_PASSWORD`.
+
+- В GitHub Actions, помимо общих секретов `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD`, добавьте:
+  - `ONEC_USERNAME` — логин к сайту релизов 1С.
+  - `ONEC_PASSWORD` — пароль к сайту релизов 1С.
+
+- Триггер для сборки в Actions — тег вида `edt_ВерсияEDT`, например `edt_2024.1.3`.
+
+- Локальная сборка:
+  1. Заполните `.env` значениями `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD`, `ONEC_USERNAME`, `ONEC_PASSWORD`.
+  2. Укажите версию EDT (поддерживаются мажорные версии 2023 и 2024; версии ниже 2023 не поддерживаются, так как начиная с 2023 появилась `1cedtcli` и была упразднена `ring`):
+     - однократно в текущей сессии: `export EDT_VERSION=2024.1.3`
+     - либо инлайном при запуске: `EDT_VERSION=2024.1.3 ./src/build-edt.sh`
+  3. Запустите сборку: `./src/build-edt.sh`.
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edt:$EDT_VERSION`.
+
+- Полезно знать:
+  - Переменная `NO_CACHE=true` отключит кэш сборки.
+  - Переменная `DOCKER_SYSTEM_PRUNE=true` перед сборкой очистит ненужные слои/объекты Docker.
+  - Образ собирается с предустановленным [плагином запрета редактирования (Disable Editing Plugin)](https://gitlab.com/marmyshev/edt-editing). Плагин устанавливается из [update‑site плагина](https://marmyshev.gitlab.io/edt-editing/update) в процессе сборки.
+
+Скрипт для локальной сборки — `build-edt.sh`.
 
 [↑ Наверх](#onec-images)
