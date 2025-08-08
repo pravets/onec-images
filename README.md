@@ -1,4 +1,9 @@
 # onec-images
+
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/pravets/onec-images?utm_source=oss&utm_medium=github&utm_campaign=pravets%2Fonec-images&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+![License](https://img.shields.io/github/license/pravets/oscript-images)
+[![Telegram](https://telegram-badge.vercel.app/api/telegram-badge?channelId=@pravets_IT)](https://t.me/pravets_it)
+
 Всё необходимое для сборки docker-образов с платформой 1С и сопутствующими инструментами.
 
 ## Оглавление
@@ -26,9 +31,12 @@
     - `DOCKER_REGISTRY_URL` — адрес вашего приватного docker registry, куда будут запушены собранные образы.
     - `DOCKER_LOGIN` — логин для вашего registry.
     - `DOCKER_PASSWORD` — пароль для вашего registry.
+4. Для образов, установщики, которых требуется скачать с сайта релизов также требуются:
+    - `ONEC_USERNAME` — логин к сайту релизов 1С.
+    - `ONEC_PASSWORD` — пароль к сайту релизов 1С.
 
-4. "Навешиваем" нужные теги для триггера сборки. Если теги уже есть, предварительно их удаляем или пушим теги с --force. Теги можно "навешивать" на последний коммит или на последний релиз необходимого для сборки образа.
-5. После завершения сборки получаем готовые образы в вашем registry.
+5. "Навешиваем" нужные теги для триггера сборки. Если теги уже есть, предварительно их удаляем или пушим теги с --force. Теги можно "навешивать" на последний коммит или на последний релиз необходимого для сборки образа.
+6. После завершения сборки получаем готовые образы в вашем registry.
 
 [↑ Наверх](#onec-images)
 
