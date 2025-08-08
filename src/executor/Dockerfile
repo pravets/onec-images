@@ -33,11 +33,12 @@ FROM ${DOCKER_REGISTRY_URL}/${BASE_IMAGE}:${BASE_TAG}
 LABEL maintainer="i@pravets.ru" \
       author="Iosif Pravets"
 
-# Прокидываем build-arg версии во второй слой для лейблов
+# Прокидываем build-args во второй слой для лейблов
 ARG EXECUTOR_VERSION
+ARG BUILD_DATE
 
 LABEL executor.version="${EXECUTOR_VERSION}" \
-      build.date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+      build.date="${BUILD_DATE}" \
       description="1C:Executor ${EXECUTOR_VERSION}"
 
 WORKDIR /tmp
