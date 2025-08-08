@@ -18,9 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         executor_version: [ '3.0.2.2', '4.0.6.7', '5.2.6.3', '6.2.4.1', '7.0.3.3' ]
-
     env:
-      DEV1C_EXECUTOR_API_KEY: ${{ secrets.DEV1C_EXECUTOR_API_KEY }}
       PUSH_IMAGE: 'false'
       # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
       # CI_SUFFIX: -ci-${{ github.sha }}
@@ -33,6 +31,8 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build Executor ${{ matrix.executor_version }} (no push)
+        env:
+          DEV1C_EXECUTOR_API_KEY: ${{ secrets.DEV1C_EXECUTOR_API_KEY }}
         run: |
           export EXECUTOR_VERSION="${{ matrix.executor_version }}"
           ./src/build-executor.sh
