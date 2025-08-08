@@ -58,14 +58,14 @@ RUN chmod +x ./1ce-installer-cli \
 ARG EDT_DISABLE_EDITING_VERSION=0.5.0.20240203-0530
 RUN /opt/1C/1CE/components/1cedt/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION}
 # cleanup
-RUN rm -f $edt_path/configuration/*.log \
-  && rm -rf $edt_path/configuration/org.eclipse.core.runtime \
-  && rm -rf $edt_path/configuration/org.eclipse.osgi \
-  && rm -rf $edt_path/plugin-development \
-  && rm -f $edt_path/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
-  && rm -f $edt_path/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
-  && rm -f $edt_path/plugins/org.eclipse.egit.doc_*.jar \
-  && rm -f $edt_path/plugins/org.eclipse.platform.doc_*.jar \
+RUN rm -f /opt/1C/1CE/components/1cedt/configuration/*.log \
+  && rm -rf /opt/1C/1CE/components/1cedt/configuration/org.eclipse.core.runtime \
+  && rm -rf /opt/1C/1CE/components/1cedt/configuration/org.eclipse.osgi \
+  && rm -rf /opt/1C/1CE/components/1cedt/plugin-development \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.egit.doc_*.jar \
+  && rm -f /opt/1C/1CE/components/1cedt/plugins/org.eclipse.platform.doc_*.jar \
   && rm -rf /tmp/*
 
 FROM ${BASE_IMAGE}:${BASE_TAG}
