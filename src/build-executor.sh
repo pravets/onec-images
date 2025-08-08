@@ -20,9 +20,9 @@ then
     docker system prune -af
 fi
 
-last_arg="."
+last_arg=(.)
 if [[ "${NO_CACHE:-}" = "true" ]] ; then
-    last_arg="--no-cache ."
+    last_arg=(--no-cache .)
 fi
 
 [[ -z "${EXECUTOR_VERSION:-}" ]] && { log_failure "Переменная EXECUTOR_VERSION не задана"; exit 1; }
@@ -41,7 +41,7 @@ DOCKER_BUILDKIT=1 docker build \
     --build-arg EXECUTOR_VERSION="$EXECUTOR_VERSION" \
     -t "$IMAGE_TAG" \
     -f "${SCRIPT_DIR}/../src/executor/Dockerfile" \
-    $last_arg
+    "${last_arg[@]}"
 
 shred -fzu "/tmp/dev1c_executor_api_key.txt" || true
 
