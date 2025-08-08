@@ -91,4 +91,4 @@ COPY --from=installer /opt/1C/1CE /opt/1C/1CE
 
 ENV PATH="/opt/1C/1CE/components/1c-enterprise-ring:/opt/1C/1CE/components/1cedt:$PATH"
 
-ENTRYPOINT [ "1cedtcli" ]]
+ENTRYPOINT [ "1cedtcli" ]
