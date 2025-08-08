@@ -29,6 +29,7 @@ RUN apt-get update \
     locales \
     ca-certificates \
     openjfx \
+    libopenjfx-java \
   && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
@@ -60,6 +61,7 @@ RUN chmod +x ./1ce-installer-cli \
   && ln -sfn "$(dirname "$RING_PATH")" /opt/1C/1CE/components/1c-enterprise-ring \
   && ln -sfn "$(dirname "$EDT_PATH")" /opt/1C/1CE/components/1cedt \
   && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
+  && sed -i '/^-Xmx/a --add-modules=javafx.controls,javafx.fxml,javafx.web\n--module-path=/usr/share/openjfx/lib' "$(dirname "$EDT_PATH")"/1cedt.ini \
   && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
   && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
   && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.core.runtime \
