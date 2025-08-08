@@ -8,11 +8,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
-      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      DEV1C_EXECUTOR_API_KEY: ${{ secrets.DEV1C_EXECUTOR_API_KEY }}
 
     steps:
       - name: Checkout repository
@@ -22,6 +17,11 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build, test and push
+        env:
+          DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+          DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DEV1C_EXECUTOR_API_KEY: ${{ secrets.DEV1C_EXECUTOR_API_KEY }}
         run: |
           export EXECUTOR_VERSION="${GITHUB_REF#refs/tags/executor_}"
           echo "Собираем executor версии ${EXECUTOR_VERSION}"
