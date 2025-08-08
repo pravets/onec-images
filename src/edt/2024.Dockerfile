@@ -28,6 +28,8 @@ RUN apt-get update \
     libgtk-3-0 \
     locales \
     ca-certificates \
+  && (DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y libwebkit2gtk-4.0-37 \
+      || DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y libwebkit2gtk-4.1-0) \
   && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
