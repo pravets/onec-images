@@ -1,0 +1,39 @@
+name: CI EDT (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/edt/**'
+      - 'src/build-edt.sh'
+      - 'tests/test-edt.sh'
+      - 'scripts/**'
+      - '.github/workflows/**'
+
+jobs:
+  build-edt:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        edt_version: [ '2024.2.6', '2023.3.6' ]
+
+    env:
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      PUSH_IMAGE: 'false'
+      # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
+      # CI_SUFFIX: -ci-${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build EDT ${{ matrix.edt_version }} (no push)
+        run: |
+          export EDT_VERSION="${{ matrix.edt_version }}"
+          ./src/build-edt.sh
