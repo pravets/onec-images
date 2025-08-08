@@ -43,8 +43,14 @@ resolve_image_tag() {
 test_executor_version() {
   log_header "Test :: executor version"
 
+  # Проверяем, что переменная EXECUTOR_VERSION задана
+  if [[ -z "${EXECUTOR_VERSION:-}" ]]; then
+    log_failure "EXECUTOR_VERSION не задан — прерываем тест"
+    exit 1
+  fi
+
   local expected actual tag
-  expected=$(echo $EXECUTOR_VERSION | sed 's/\(.*\)\./\1-/')
+  expected=$(echo "$EXECUTOR_VERSION" | sed 's/\(.*\)\./\1-/')
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" --version)
 
