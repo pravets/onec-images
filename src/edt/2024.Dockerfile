@@ -10,6 +10,7 @@ ARG DOCKER_REGISTRY_URL=library
 FROM ${DOWNLOADER_REGISTRY_URL}/${DOWNLOADER_IMAGE}:${DOWNLOADER_TAG} AS downloader
 
 ARG EDT_VERSION
+RUN : "${EDT_VERSION:?EDT_VERSION argument is required}"
 
 WORKDIR /tmp
 
@@ -19,7 +20,7 @@ RUN --mount=type=secret,id=onec_username \
     export YARD_RELEASES_PWD=$(cat /run/secrets/onec_password) && \
     /app/downloader.sh edt "$EDT_VERSION"
 
-FROM ${BASE_IMAGE}:${BASE_TAG} AS base
+FROM ${DOCKER_REGISTRY_URL}/${BASE_IMAGE}:${BASE_TAG} AS base
 
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
@@ -73,6 +74,7 @@ RUN /opt/1C/1CE/components/1cedt/1cedt -clean -purgeHistory -application org.ecl
 FROM base
 
 ARG EDT_VERSION
+RUN : "${EDT_VERSION:?EDT_VERSION argument is required}"
 
 LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
       edt.version="${EDT_VERSION}" \
@@ -89,4 +91,4 @@ COPY --from=installer /opt/1C/1CE /opt/1C/1CE
 
 ENV PATH="/opt/1C/1CE/components/1c-enterprise-ring:/opt/1C/1CE/components/1cedt:$PATH"
 
-ENTRYPOINT [ "1cedtcli" ]
+ENTRYPOINT [ "1cedtcli" ]]
