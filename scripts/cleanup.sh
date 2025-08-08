@@ -8,7 +8,7 @@ rm -f /tmp/onec_username
 rm -f /tmp/onec_password
 
 # Разлогинивание из Docker
-if [ -n "$DOCKER_REGISTRY_URL" ]; then
+if [ -n "${DOCKER_REGISTRY_URL:-}" ]; then
     docker logout "$DOCKER_REGISTRY_URL"
 else
     docker logout
