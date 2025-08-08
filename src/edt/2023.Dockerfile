@@ -35,6 +35,8 @@ RUN apt-get update \
     # edt dependencies
     libgtk-3-0 \
     locales \
+    ca-certificates \
+  && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
     /var/cache/debconf \
@@ -47,11 +49,10 @@ COPY --from=downloader /tmp/${downloads} /tmp/${downloads}
 WORKDIR /tmp/${downloads}
 
 RUN chmod +x ./1ce-installer-cli \
-  && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings\
-  && ln -s $(dirname $(find /opt/1C/1CE -name ring)) /opt/1C/1CE/components/1c-enterprise-ring \
-  && ln -s $(dirname $(find /opt/1C/1CE -name 1cedt)) /opt/1C/1CE/components/1cedt \
-  && rm -rf \
-    /tmp/* 
+  && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings && \
+  ln -s "$(dirname "$(find /opt/1C/1CE -type f -name ring -print -quit)")" /opt/1C/1CE/components/1c-enterprise-ring && \
+  ln -s "$(dirname "$(find /opt/1C/1CE -type f -name 1cedt -print -quit)")" /opt/1C/1CE/components/1cedt && \
+  rm -rf /tmp/*
 
 # Install Disable Editing Plugin
 ARG EDT_DISABLE_EDITING_VERSION=0.5.0.20240203-0530
@@ -75,11 +76,10 @@ WORKDIR /tmp
 
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-    # downloader dependencies
-    curl \
-    # edt dependencies
     libgtk-3-0 \
     locales \
+    ca-certificates \
+  && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
     /var/cache/debconf \
