@@ -6,7 +6,9 @@ if [[ -z "$DOCKER_REGISTRY_URL" || -z "$DOCKER_LOGIN" || -z "$DOCKER_PASSWORD" ]
     exit 1
 fi
 
+set +x
 echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY_URL" -u "$DOCKER_LOGIN" --password-stdin
+set -x
 
 if [[ $? -eq 0 ]]; then
     echo "Успешная авторизация в $DOCKER_REGISTRY_URL"

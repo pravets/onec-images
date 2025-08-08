@@ -1,27 +1,24 @@
-name: CI EDT (build-only on PR)
+name: CI Executor (build-only on PR)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'src/edt/**'
-      - 'src/build-edt.sh'
-      - 'tests/test-edt.sh'
+      - 'src/executor/**'
+      - 'src/build-executor.sh'
+      - 'tests/test-executor.sh'
       - 'scripts/**'
-      - '.github/workflows/ci-edt.yml'
+      - '.github/workflows/ci-executor.yml'
 
 jobs:
-  build-edt:
+  build-executor:
     if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        edt_version: [ '2024.2.6', '2023.3.6' ]
-
+        executor_version: [ '3.0.2.2', '4.0.6.7', '5.2.6.3', '6.2.4.1', '7.0.3.3' ]
     env:
-      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
-      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
       PUSH_IMAGE: 'false'
       # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
       # CI_SUFFIX: -ci-${{ github.sha }}
@@ -33,7 +30,9 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build EDT ${{ matrix.edt_version }} (no push)
+      - name: Build Executor ${{ matrix.executor_version }} (no push)
+        env:
+          DEV1C_EXECUTOR_API_KEY: ${{ secrets.DEV1C_EXECUTOR_API_KEY }}
         run: |
-          export EDT_VERSION="${{ matrix.edt_version }}"
-          ./src/build-edt.sh
+          export EXECUTOR_VERSION="${{ matrix.executor_version }}"
+          ./src/build-executor.sh

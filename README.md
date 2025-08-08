@@ -53,9 +53,21 @@
 
 Для сборки требуется также ключ API для скачивания установщика 1С:Исполнителя с сайта https://developer.1c.ru. Ключ необходимо записать в переменную среды/секрет `DEV1C_EXECUTOR_API_KEY`.
 
-Триггером для сборки в Actions является тег вида `executor_ВерсияДляСборки`, например `executor_3.0.2.2`.
+- Триггером для сборки в Actions является тег вида `executor_ВерсияДляСборки`, например `executor_3.0.2.2`.
+- Для PR‑проверок добавлен workflow, который собирает и тестирует образ без публикации.
 
-Скрипт для локальной сборки — `build-oscript.sh`.
+- Локальная сборка:
+  1. Заполните `.env` значениями `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD`, `DEV1C_EXECUTOR_API_KEY`.
+  2. Укажите версию Executor:
+     - однократно в текущей сессии: `export EXECUTOR_VERSION=3.0.2.2`
+     - либо инлайном при запуске: `EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh`
+  3. Запустите сборку: `./src/build-executor.sh`.
+
+  - без публикации в реестр (локальная проверка):
+    - один запуск: `PUSH_IMAGE=false EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh`
+    - либо через `.env`: `PUSH_IMAGE=false`
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION`.
 
 [↑ Наверх](#onec-images)
 

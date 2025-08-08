@@ -12,6 +12,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+# Resolve image tag from env or defaults
+resolve_image_tag() {
+  if [[ -n "${IMAGE_TAG:-}" ]]; then
+    echo "$IMAGE_TAG"
+    return
+  fi
+  local prefix=""
+  if [[ -n "${DOCKER_REGISTRY_URL:-}" ]]; then
+    prefix="${DOCKER_REGISTRY_URL}/"
+  fi
+  echo "${prefix}executor:${EXECUTOR_VERSION}"
+}
+
 # Проверяет, соответствует ли версия Docker-образа executor ожидаемому формату.
 #
 # Использует переменные окружения EXECUTOR_VERSION и DOCKER_REGISTRY_URL для формирования ожидаемой и фактической версии.
@@ -30,9 +43,16 @@ source "${SCRIPT_DIR}/../tools/assert.sh"
 test_executor_version() {
   log_header "Test :: executor version"
 
-  local expected actual
-  expected=$(echo $EXECUTOR_VERSION | sed 's/\(.*\)\./\1-/')
-  actual=$(docker run --rm $DOCKER_REGISTRY_URL/executor:$EXECUTOR_VERSION --version)
+  # Проверяем, что переменная EXECUTOR_VERSION задана
+  if [[ -z "${EXECUTOR_VERSION:-}" ]]; then
+    log_failure "EXECUTOR_VERSION не задан — прерываем тест"
+    exit 1
+  fi
+
+  local expected actual tag
+  expected=$(echo "$EXECUTOR_VERSION" | sed 's/\(.*\)\./\1-/')
+  tag="$(resolve_image_tag)"
+  actual=$(docker run --rm "$tag" --version)
 
   if assert_contain "$actual" "$expected"; then
     log_success "executor version test passed"

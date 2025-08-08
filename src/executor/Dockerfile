@@ -1,11 +1,9 @@
-# Используем официальный базовый образ
+# Используем многоэтапную сборку: builder для скачивания/распаковки, runtime — минимальный рантайм
 ARG DOCKER_REGISTRY_URL=library
 ARG BASE_IMAGE=ubuntu
-ARG BASE_TAG=22.04
-FROM ${DOCKER_REGISTRY_URL}/${BASE_IMAGE}:${BASE_TAG}
+ARG BASE_TAG=24.04
 
-LABEL maintainer="i@pravets.ru"
-LABEL author="Iosif Pravets"
+FROM ${DOCKER_REGISTRY_URL}/${BASE_IMAGE}:${BASE_TAG} AS builder
 
 ARG EXECUTOR_VERSION
 
@@ -13,19 +11,10 @@ WORKDIR /tmp
 
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
-    locales \
     ca-certificates \
-    # downloader dependencies
     curl \
-    # build dependencies
     unzip \
-  && rm -rf  \
-    /var/lib/apt/lists/* \
-    /var/cache/debconf \
-    /tmp/* \
-  && localedef -i ru_RU -c -f UTF-8 -A /usr/share/locale/locale.alias ru_RU.UTF-8
-
-ENV LANG=ru_RU.UTF-8
+  && rm -rf /var/lib/apt/lists/* /var/cache/debconf
 
 # Install Executor (используем BuildKit secret)
 RUN --mount=type=secret,id=dev1c_executor_api_key \
@@ -33,13 +22,42 @@ RUN --mount=type=secret,id=dev1c_executor_api_key \
     -H "X-Developer-1c-Api:$(cat /run/secrets/dev1c_executor_api_key)" \
     -o executor.zip \
     https://developer.1c.ru/applications/Console/api/v1/download/executor/${EXECUTOR_VERSION}/linux \
-  && unzip executor.zip \
-  && rm executor.zip \
   && mkdir -p /opt/1C/executor \
-  && cp -R * /opt/1C/executor \
-# cleanup
-  && rm -rf /tmp/* \
-  && apt purge -y unzip
+  && unzip -q -d /opt/1C/executor executor.zip \
+  && rm -f executor.zip \
+  && test -x /opt/1C/executor/executor
 
-ENV PATH="/opt/1C/executor:$PATH"
-ENTRYPOINT ["/opt/1C/executor/executor"]
+
+FROM ${DOCKER_REGISTRY_URL}/${BASE_IMAGE}:${BASE_TAG}
+
+LABEL maintainer="i@pravets.ru" \
+      author="Iosif Pravets"
+
+# Прокидываем build-args во второй слой для лейблов
+ARG EXECUTOR_VERSION
+ARG BUILD_DATE
+
+LABEL executor.version="${EXECUTOR_VERSION}" \
+      build.date="${BUILD_DATE}" \
+      description="1C:Executor ${EXECUTOR_VERSION}"
+
+WORKDIR /tmp
+
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+    locales \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/* /var/cache/debconf \
+  && localedef -i ru_RU -c -f UTF-8 -A /usr/share/locale/locale.alias ru_RU.UTF-8
+
+ENV LANG=ru_RU.UTF-8 \
+    LC_ALL=ru_RU.UTF-8 \
+    LANGUAGE=ru_RU:ru \
+    PATH="/opt/1C/executor:$PATH"
+
+COPY --from=builder /opt/1C/executor /opt/1C/executor
+
+WORKDIR /work
+
+ENTRYPOINT ["executor"]
+CMD ["--help"]
