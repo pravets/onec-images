@@ -8,7 +8,7 @@ on:
       - 'src/build-edt.sh'
       - 'tests/test-edt.sh'
       - 'scripts/**'
-      - '.github/workflows/**'
+      - '.github/workflows/ci-edt.yml'
 
 jobs:
   build-edt:

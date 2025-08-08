@@ -8,7 +8,7 @@ on:
       - 'src/build-executor.sh'
       - 'tests/test-executor.sh'
       - 'scripts/**'
-      - '.github/workflows/**'
+      - '.github/workflows/ci-executor.yml'
 
 jobs:
   build-executor:
