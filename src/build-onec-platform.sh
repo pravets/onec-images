@@ -51,7 +51,7 @@ DOCKER_BUILDKIT=1 docker build \
         version_prefix=$(echo "$ONEC_VERSION" | awk -F. '{print $1 "." $2 "." $3}')
         dockerfile_path="${SCRIPT_DIR}/../src/onec-platform/${version_prefix}.Dockerfile"
         if [[ ! -f "$dockerfile_path" ]]; then
-            log_failure "Не найден подходящий Dockerfile для версии ${version_prefix}. Поддерживаются 8.3.24–8.3.27"
+            log_failure "Не найден подходящий Dockerfile для версии ${version_prefix}. Поддерживаются 8.3.23–8.3.27"
             exit 1
         fi
         echo "$dockerfile_path"

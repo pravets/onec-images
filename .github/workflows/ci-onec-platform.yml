@@ -24,6 +24,7 @@ jobs:
         id: changes
         with:
           filters: |
+            v8323: src/onec-platform/8.3.23.Dockerfile
             v8324: src/onec-platform/8.3.24.Dockerfile
             v8325: src/onec-platform/8.3.25.Dockerfile
             v8326: src/onec-platform/8.3.26.Dockerfile
@@ -32,6 +33,7 @@ jobs:
       - id: set-matrix
         run: |
           versions=()
+          [[ '${{ steps.changes.outputs.v8323 }}' == 'true' ]] && versions+=('8.3.23.2236')
           [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1819')
           [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1633')
           [[ '${{ steps.changes.outputs.v8326 }}' == 'true' ]] && versions+=('8.3.26.1656')
