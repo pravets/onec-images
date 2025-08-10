@@ -1,0 +1,74 @@
+name: CI onec-platform (dynamic by changed Dockerfiles)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/onec-full/**'
+      - 'src/build-onec-full.sh'
+      - 'tests/test-onec-full.sh'
+      - 'scripts/**'
+      - '.github/workflows/ci-onec-platform.yml'
+
+jobs:
+  detect:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      has_changes: ${{ steps.set-matrix.outputs.has_changes }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            v8324: src/onec-full/8.3.24.Dockerfile
+            v8325: src/onec-full/8.3.25.Dockerfile
+            v8326: src/onec-full/8.3.26.Dockerfile
+            v8327: src/onec-full/8.3.27.Dockerfile
+
+      - id: set-matrix
+        run: |
+          versions=()
+          [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1618')
+          [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1309')
+          [[ '${{ steps.changes.outputs.v8326 }}' == 'true' ]] && versions+=('8.3.26.1523')
+          [[ '${{ steps.changes.outputs.v8327 }}' == 'true' ]] && versions+=('8.3.27.1644')
+
+          if [ ${#versions[@]} -eq 0 ]; then
+            echo 'has_changes=false' >> $GITHUB_OUTPUT
+            echo 'matrix={"onec_version":[]}' >> $GITHUB_OUTPUT
+          else
+            echo 'has_changes=true' >> $GITHUB_OUTPUT
+            json=$(jq -cn --argjson arr "$(printf '%s\n' "${versions[@]}" | jq -R . | jq -s .)" '{onec_version: $arr}')
+            echo "matrix=$json" >> $GITHUB_OUTPUT
+          fi
+
+  build:
+    needs: detect
+    if: needs.detect.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.detect.outputs.matrix) }}
+
+    env:
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      PUSH_IMAGE: 'false'
+      # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
+      # CI_SUFFIX: -ci-${{ github.sha }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build onec-full ${{ matrix.onec_version }} (no push)
+        run: |
+          export ONEC_VERSION="${{ matrix.onec_version }}"
+          ./src/build-onec-full.sh
