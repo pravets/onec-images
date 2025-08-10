@@ -34,7 +34,7 @@ jobs:
       - id: set-matrix
         run: |
           versions=()
-          [[ '${{ steps.changes.outputs.v8323 }}' == 'true' ]] && versions+=('8.3.22.2557')
+          [[ '${{ steps.changes.outputs.v8322 }}' == 'true' ]] && versions+=('8.3.22.2557')
           [[ '${{ steps.changes.outputs.v8323 }}' == 'true' ]] && versions+=('8.3.23.2236')
           [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1819')
           [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1633')
