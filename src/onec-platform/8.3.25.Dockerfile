@@ -48,11 +48,12 @@ RUN chmod +x /create-symlink-to-current-1cv8.sh \
 FROM ubuntu:24.04
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ONEC_VERSION
+ARG BUILD_DATE
 LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
       org.opencontainers.image.title="onec-platform" \
       org.opencontainers.image.description="1C:Enterprise platform runtime ${ONEC_VERSION}" \
       org.opencontainers.image.version="${ONEC_VERSION}" \
-      org.opencontainers.image.created="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+      org.opencontainers.image.created="${BUILD_DATE}"
 
 ARG onec_uid="999"
 ARG onec_gid="999"

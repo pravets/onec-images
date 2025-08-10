@@ -44,6 +44,7 @@ DOCKER_BUILDKIT=1 docker build \
     --secret id=onec_username,src=/tmp/onec_username \
     --secret id=onec_password,src=/tmp/onec_password \
     --build-arg ONEC_VERSION="$ONEC_VERSION" \
+    --build-arg BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
     -t "$IMAGE_TAG" \
     -f "$(
         # Select Dockerfile by first three components of ONEC_VERSION
