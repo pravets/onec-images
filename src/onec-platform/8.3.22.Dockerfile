@@ -20,7 +20,7 @@ RUN --mount=type=secret,id=onec_username \
     /app/downloader.sh server "$ONEC_VERSION"
 
 # Начало основной стадии сборки
-FROM ubuntu:22.04 AS base
+FROM ubuntu:20.04 AS base
 
 # Копируем скрипты и файлы установки
 ARG ONEC_VERSION
@@ -45,7 +45,7 @@ RUN chmod +x /create-symlink-to-current-1cv8.sh \
   && /create-symlink-to-current-1cv8.sh \
   && rm /create-symlink-to-current-1cv8.sh
 
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ARG ONEC_VERSION
 ARG BUILD_DATE
@@ -66,14 +66,14 @@ RUN set -xe \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       locales \
       ca-certificates \
-      libwebkit2gtk-4.1-0 \
+      libwebkit2gtk-4.0-37 \
       ttf-mscorefonts-installer \
       libfontconfig1 \
       libgsf-1-114 \
       libglib2.0-0 \
-      libodbc2 \
+      libodbc1 \
       libmagickwand-6.q16-6 \
-      libenchant-2-2 \
+      libenchant1c2a \
       libsm6 \
       libglu1-mesa \
       dbus-x11 \
