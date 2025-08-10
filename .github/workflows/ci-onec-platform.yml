@@ -32,22 +32,25 @@ jobs:
             v8327: src/onec-platform/8.3.27.Dockerfile
 
       - id: set-matrix
+        shell: bash
         run: |
+          set -euo pipefail
           versions=()
-          [[ '${{ steps.changes.outputs.v8322 }}' == 'true' ]] && versions+=('8.3.22.2557')
           [[ '${{ steps.changes.outputs.v8323 }}' == 'true' ]] && versions+=('8.3.23.2236')
           [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1819')
           [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1633')
           [[ '${{ steps.changes.outputs.v8326 }}' == 'true' ]] && versions+=('8.3.26.1656')
           [[ '${{ steps.changes.outputs.v8327 }}' == 'true' ]] && versions+=('8.3.27.1644')
 
-          if [ ${#versions[@]} -eq 0 ]; then
-            echo 'has_changes=false' >> $GITHUB_OUTPUT
-            echo 'matrix={"onec_version":[]}' >> $GITHUB_OUTPUT
+          if (( ${#versions[@]} == 0 )); then
+            {
+              printf '%s\n' 'has_changes=false'
+              printf '%s\n' 'matrix={"onec_version":[]}'
+            } >> "$GITHUB_OUTPUT"
           else
-            echo 'has_changes=true' >> $GITHUB_OUTPUT
-            json=$(jq -cn --argjson arr "$(printf '%s\n' "${versions[@]}" | jq -R . | jq -s .)" '{onec_version: $arr}')
-            echo "matrix=$json" >> $GITHUB_OUTPUT
+            printf '%s\n' 'has_changes=true' >> "$GITHUB_OUTPUT"
+            json="$(jq -cn --argjson arr "$(printf '%s\n' "${versions[@]}" | jq -R . | jq -s .)" '{onec_version: $arr}')"
+            printf '%s\n' "matrix=$json" >> "$GITHUB_OUTPUT"
           fi
 
   build:
