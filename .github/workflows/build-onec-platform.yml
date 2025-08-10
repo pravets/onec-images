@@ -1,0 +1,29 @@
+name: Build onec-platform Docker Image
+
+on:
+  push:
+    tags:
+      - 'onec_platform_*'   # реагировать на теги, начинающиеся с onec_platform_
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build, test and push onec-platform image
+        run: |
+          export ONEC_VERSION="${GITHUB_REF#refs/tags/onec_platform_}"
+          echo "Собираем onec-platform версии ${ONEC_VERSION}"
+          ./src/build-onec-platform.sh
