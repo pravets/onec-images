@@ -24,6 +24,7 @@ jobs:
         id: changes
         with:
           filters: |
+            v8322: src/onec-platform/8.3.21.Dockerfile
             v8322: src/onec-platform/8.3.22.Dockerfile
             v8323: src/onec-platform/8.3.23.Dockerfile
             v8324: src/onec-platform/8.3.24.Dockerfile
@@ -36,6 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           versions=()
+          [[ '${{ steps.changes.outputs.v8321 }}' == 'true' ]] && versions+=('8.3.21.1895')
           [[ '${{ steps.changes.outputs.v8322 }}' == 'true' ]] && versions+=('8.3.22.2557')
           [[ '${{ steps.changes.outputs.v8323 }}' == 'true' ]] && versions+=('8.3.23.2236')
           [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1819')
