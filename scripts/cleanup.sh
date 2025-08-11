@@ -2,6 +2,13 @@
 set -euo pipefail
 
 
+# Пропускаем очистку в среде CI
+if [ -n "${CI:-}" ] && [ "${CI}" != "false" ]; then
+    echo "Обнаружена среда CI, очистка пропущена."
+    exit 0
+fi
+
+
 # Удаление файла с ключом
 rm -f dev1c_executor_api_key.txt
 rm -f /tmp/onec_username
