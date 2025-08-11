@@ -1,13 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-
 # Пропускаем очистку в среде CI
 if [ -n "${CI:-}" ] && [ "${CI}" != "false" ]; then
-    echo "Обнаружена среда CI, очистка пропущена."
+    echo "Обнаружена среда CI: удаляем временные секреты и выходим из Docker."
+    rm -f dev1c_executor_api_key.txt \
+          /tmp/onec_username \
+          /tmp/onec_password || true
+    docker logout     || true
     exit 0
 fi
-
 
 # Удаление файла с ключом
 rm -f dev1c_executor_api_key.txt
