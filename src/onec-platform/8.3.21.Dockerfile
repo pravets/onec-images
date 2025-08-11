@@ -101,6 +101,12 @@ RUN set -xe \
   # Подстрахуем поиск драйверов: многие тулки ищут их в /usr/lib/dri
 RUN [ -e /usr/lib/dri ] || ln -s /usr/lib/x86_64-linux-gnu/dri /usr/lib/dri
 
+# Удаляем конфликтующие libstdc++ из дистрибутива 1С, чтобы использовалась системная версия
+RUN set -e; \
+  while IFS= read -r file; do \
+    mv "$file" "$file.bak"; \
+  done < <(find /opt/1cv8 -type f -name 'libstdc++.so.6*' -o -name 'libgcc_s.so.1' || true)
+
 ENV LANG=ru_RU.UTF-8
 ENV LC_ALL=ru_RU.UTF-8
 ENV LANGUAGE=ru_RU:ru
