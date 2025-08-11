@@ -27,12 +27,11 @@ fi
 [[ -z "${EDT_VERSION:-}" ]] && { echo "Переменная EDT_VERSION не задана" >&2; exit 1; }
 edt_version=$EDT_VERSION
 
-if [[ -z "${DOCKER_REGISTRY_URL:-}" ]]; then
-    echo "Ошибка: для сборки edtcli необходимо задать DOCKER_REGISTRY_URL (приватный реестр с образом edt)." >&2
-    exit 1
+# Form the image tag; allow local tag without registry for CI builds
+registry_prefix=""
+if [[ -n "${DOCKER_REGISTRY_URL:-}" ]]; then
+    registry_prefix="${DOCKER_REGISTRY_URL}/"
 fi
-
-registry_prefix="${DOCKER_REGISTRY_URL}/"
 IMAGE_TAG="${registry_prefix}edtcli:${edt_version}${CI_SUFFIX:-}"
 BASE_IMAGE_TAG="${registry_prefix}edt:${edt_version}"
 
