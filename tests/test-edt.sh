@@ -30,7 +30,7 @@ test_1cedtcli_is_running_version() {
   local expected actual tag
   expected="1C:EDT Интерфейс командной строки"
   tag="$(resolve_image_tag)"
-  actual=$(docker run --rm "$tag" 2>/dev/null | head -n1)
+  actual=$(docker run --rm "$tag" 1cedctcli 2>/dev/null | head -n1)
 
   if assert_contain "$actual" "$expected"; then
     log_success "1cedtcli is running test passed"
