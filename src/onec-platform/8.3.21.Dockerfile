@@ -75,8 +75,12 @@ RUN set -xe \
       libmagickwand-6.q16-6 \
       libenchant1c2a \
       libsm6 \
+      libglvnd0 \
+      libgl1 \
       libgl1-mesa-dri \
       libglx-mesa0 \
+      libosmesa6 \
+      mesa-utils \
       libglu1-mesa \
       dbus-x11 \
       xvfb \
@@ -95,6 +99,7 @@ ENV LC_ALL=ru_RU.UTF-8
 ENV LANGUAGE=ru_RU:ru
 ENV XKB_CONFIG_ROOT=/usr/share/X11/xkb
 ENV NO_AT_BRIDGE=1
+ENV LIBGL_DRIVERS_PATH=/usr/lib/x86_64-linux-gnu/dri
 
 RUN groupadd -r grp1cv8 --gid=$onec_gid \
   && useradd -r -g grp1cv8 --uid=$onec_uid -m --home-dir=/home/usr1cv8 --shell=/bin/bash usr1cv8 \
