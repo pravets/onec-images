@@ -27,5 +27,6 @@ jobs:
           export EDT_VERSION="${GITHUB_REF#refs/tags/edt_}"
             echo "Собираем edt версии ${EDT_VERSION}"
             ./src/build-edt.sh
+            ./src/build-edtcli.sh
   
 

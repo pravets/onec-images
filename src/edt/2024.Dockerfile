@@ -94,4 +94,8 @@ COPY --from=installer /opt/1C/1CE /opt/1C/1CE
 
 ENV PATH="/opt/1C/1CE/components/1c-enterprise-ring:/opt/1C/1CE/components/1cedt:$PATH"
 
-ENTRYPOINT [ "1cedtcli" ]
+# Обеспечить единообразие имён CLI (1cedtcli и 1cedtcli.sh)
+COPY scripts/ensure_edtcli_symlink.sh /usr/local/bin/ensure_edtcli_symlink.sh
+RUN chmod +x /usr/local/bin/ensure_edtcli_symlink.sh \
+  && /usr/local/bin/ensure_edtcli_symlink.sh --dir /opt/1C/1CE/components/1cedt \
+  && rm -f /usr/local/bin/ensure_edtcli_symlink.sh
