@@ -24,14 +24,33 @@ resolve_image_tag() {
   echo "${prefix}edtcli:${EDT_VERSION}"
 }
 
-# 1) 1cedtcli should run
-log_header "Test :: edtcli image runs 1cedtcli"
-expected="1C:EDT Интерфейс командной строки"
-tag="$(resolve_image_tag)"
-actual=$(docker run --rm "$tag" --help 2>/dev/null | head -n1)
+test_image_runs_1cedtcli() {
+  log_header "Test :: edtcli image runs 1cedtcli"
+  local expected actual tag
+  expected="1C:EDT Интерфейс командной строки"
+  tag="$(resolve_image_tag)"
+  actual=$(docker run --rm "$tag" --help 2>/dev/null | head -n1)
 
-if assert_contain "$actual" "$expected"; then
-  log_success "edtcli image runs 1cedtcli test passed"
-else
-  log_failure "edtcli image runs 1cedtcli test failed"
-fi
+  if assert_contain "$actual" "$expected"; then
+    log_success "edtcli image runs 1cedtcli test passed"
+  else
+    log_failure "edtcli image runs 1cedtcli test failed"
+  fi
+}
+
+test_image_runs_1cedtcli_sh() {
+  log_header "Test :: edtcli image runs 1cedtcli.sh"
+  local expected actual tag
+  expected="1C:EDT Интерфейс командной строки"
+  tag="$(resolve_image_tag)"
+  actual=$(docker run --rm "$tag" 1cedtcli.sh --help 2>/dev/null | head -n1)
+
+  if assert_contain "$actual" "$expected"; then
+    log_success "edtcli image runs 1cedtcli.sh test passed"
+  else
+    log_failure "edtcli image runs 1cedtcli.sh test failed"
+  fi
+}
+
+test_image_runs_1cedtcli
+test_image_runs_1cedtcli_sh
