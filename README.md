@@ -14,6 +14,7 @@
 - [1С:Исполнитель](#1сисполнитель)
 - [1С:EDT](#1сedt)
 - [1С:EDT CLI](#1сedt-cli)
+- [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 
 ## Как собрать образы
 
@@ -114,5 +115,34 @@
   2. Запуск: `./src/build-edtcli.sh`
 
 - Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edtcli:$EDT_VERSION`.
+
+[↑ Наверх](#onec-images)
+
+## 1С:Платформа (onec-platform)
+
+Для сборки требуется доступ к сайту релизов 1С для скачивания установщиков платформы. Данные учётной записи необходимо передать через переменные среды/секреты `ONEC_USERNAME` и `ONEC_PASSWORD`.
+
+- Сборка в GitHub Actions (PR‑проверки):
+  - Есть workflow `ci-onec-platform.yml`, который при изменении файлов в `src/onec-platform/*.Dockerfile` автоматически формирует матрицу версий и собирает соответствующие образы без публикации в реестр.
+  - Секреты: `ONEC_USERNAME`, `ONEC_PASSWORD`.
+  
+- Сборка и публикация через GitHub Actions по тегу:
+  - Триггером является тег вида `onec_platform_ВерсияПлатформы`, например `onec_platform_8.3.22.2557`.
+  - После выпуска такого тега workflow соберёт и опубликует образ `onec-platform:$ONEC_VERSION` в указанный реестр.
+
+- Локальная сборка:
+  1. Заполните `.env` значениями `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD`, `ONEC_USERNAME`, `ONEC_PASSWORD`.
+  2. Укажите версию платформы 1С (поддерживаются минорные ветки 8.3.20–8.3.27). Скрипт выбирает `Dockerfile` по первым трём компонентам версии: `8.3.22.x` → `src/onec-platform/8.3.22.Dockerfile`.
+     - однократно в текущей сессии: `export ONEC_VERSION=8.3.22.2557`
+     - либо инлайном при запуске: `ONEC_VERSION=8.3.22.2557 ./src/build-onec-platform.sh`
+  3. Запустите сборку: `./src/build-onec-platform.sh`.
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/onec-platform:$ONEC_VERSION`.
+
+- Полезно знать:
+  - `PUSH_IMAGE=false` — собрать без публикации в реестр.
+  - `NO_CACHE=true` — отключить кэш сборки.
+  - `DOCKER_SYSTEM_PRUNE=true` — предварительно очистить неиспользуемые слои/объекты Docker.
+  - Секреты для скачивания установщиков передаются в сборку через BuildKit‑секреты, которые готовятся скриптом `scripts/prepare_onec_credentials.sh` на основе переменных `ONEC_USERNAME`/`ONEC_PASSWORD`.
 
 [↑ Наверх](#onec-images)

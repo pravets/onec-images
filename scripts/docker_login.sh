@@ -8,7 +8,6 @@ fi
 
 set +x
 echo "$DOCKER_PASSWORD" | docker login "$DOCKER_REGISTRY_URL" -u "$DOCKER_LOGIN" --password-stdin
-set -x
 
 if [[ $? -eq 0 ]]; then
     echo "Успешная авторизация в $DOCKER_REGISTRY_URL"
