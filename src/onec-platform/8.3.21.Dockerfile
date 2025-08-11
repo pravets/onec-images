@@ -79,6 +79,10 @@ RUN set -xe \
       libgl1 \
       libgl1-mesa-dri \
       libglx-mesa0 \
+      libegl1-mesa \
+      libgbm1 \
+      libdrm2 \
+      libxrandr2 \
       libosmesa6 \
       mesa-utils \
       libglu1-mesa \
@@ -93,6 +97,8 @@ RUN set -xe \
   && locale-gen ru_RU.UTF-8 \
   && update-locale LANG=ru_RU.UTF-8 \
   && install -d -m 1777 -o root -g root /tmp/.X11-unix
+  # Подстрахуем поиск драйверов: многие тулки ищут их в /usr/lib/dri
+RUN [ -e /usr/lib/dri ] || ln -s /usr/lib/x86_64-linux-gnu/dri /usr/lib/dri
 
 ENV LANG=ru_RU.UTF-8
 ENV LC_ALL=ru_RU.UTF-8
