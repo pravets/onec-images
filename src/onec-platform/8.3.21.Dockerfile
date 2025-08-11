@@ -76,6 +76,7 @@ RUN set -xe \
       libenchant1c2a \
       libsm6 \
       libgl1-mesa-dri \
+      libglx-mesa0 \
       libglu1-mesa \
       dbus-x11 \
       xvfb \
