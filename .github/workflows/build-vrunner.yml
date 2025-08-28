@@ -1,0 +1,29 @@
+name: Build vrunner Docker Image
+
+on:
+  push:
+    tags:
+      - 'vrunner_*'   # реагировать на теги, начинающиеся с vrunner_
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build, test and push vrunner image
+        run: |
+          export ONEC_VERSION="${GITHUB_REF#refs/tags/vrunner_}"
+          echo "Собираем vrunner версии ${ONEC_VERSION}"
+          ./src/build-vrunner.sh
