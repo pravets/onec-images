@@ -88,6 +88,7 @@ jobs:
     env:
       ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
       ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: 'local'
       PUSH_IMAGE: 'false'
       # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
       # CI_SUFFIX: -ci-${{ github.sha }}
