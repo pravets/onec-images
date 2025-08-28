@@ -40,13 +40,32 @@ if [[ -n "${DOCKER_LOGIN:-}" && -n "${DOCKER_PASSWORD:-}" && -n "${DOCKER_REGIST
     source "${SCRIPT_DIR}/../scripts/docker_login.sh"
 fi
 
-# Убедимся, что базовый образ onec-platform доступен локально
-if ! docker image inspect "$BASE_IMAGE_TAG" >/dev/null 2>&1; then
+# Убедимся, что базовый образ onec-platform доступен локально.
+# Предпочитаем локальный образ без префикса (onec-platform:${onec_version}), затем с префиксом.
+local_unprefixed="onec-platform:${onec_version}"
+found_local=false
 
-    if docker pull "$BASE_IMAGE_TAG"; then
-        echo "Базовый образ получен из реестра: $BASE_IMAGE_TAG"
+if docker image inspect "$local_unprefixed" >/dev/null 2>&1; then
+    echo "Найден локальный образ: $local_unprefixed"
+    BASE_IMAGE_TAG="$local_unprefixed"
+    found_local=true
+elif docker image inspect "$BASE_IMAGE_TAG" >/dev/null 2>&1; then
+    echo "Найден локальный образ с префиксом: $BASE_IMAGE_TAG"
+    found_local=true
+fi
+
+if ! $found_local; then
+    # Попытка пуллить только если указан реальный реестр (не 'local' — тестовая метка для CI)
+    if [[ -n "${DOCKER_REGISTRY_URL:-}" && "${DOCKER_REGISTRY_URL}" != "local" ]]; then
+        if docker pull "$BASE_IMAGE_TAG"; then
+            echo "Базовый образ получен из реестра: $BASE_IMAGE_TAG"
+        else
+            echo "Не удалось получить базовый образ из реестра: $BASE_IMAGE_TAG" >&2
+            echo "Выполняю локальную сборку базового образа onec-platform:${onec_version}" >&2
+            PUSH_IMAGE=${PUSH_IMAGE} ONEC_VERSION="$onec_version" CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" "${SCRIPT_DIR}/build-onec-platform.sh"
+        fi
     else
-        echo "Не удалось получить базовый образ из реестра: $BASE_IMAGE_TAG" >&2
+        echo "DOCKER_REGISTRY_URL пустой или равен 'local' — пропускаю попытку pull и строю локально" >&2
         echo "Выполняю локальную сборку базового образа onec-platform:${onec_version}" >&2
         PUSH_IMAGE=${PUSH_IMAGE} ONEC_VERSION="$onec_version" CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" "${SCRIPT_DIR}/build-onec-platform.sh"
     fi
