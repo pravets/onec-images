@@ -1,7 +1,7 @@
 ARG DOCKER_REGISTRY_URL
 ARG ONEC_VERSION
 ARG OSCRIPT_VERSION=stable
-FROM sleemp/oscript:${OSCRIPT_VERSION} as oscript
+FROM sleemp/oscript:${OSCRIPT_VERSION} AS oscript
 
 # Финальный образ — платформа 1С из приватного реестра под нужную версию
 FROM ${DOCKER_REGISTRY_URL}/onec-platform:${ONEC_VERSION}
