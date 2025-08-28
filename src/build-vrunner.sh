@@ -25,7 +25,6 @@ if [[ "${NO_CACHE:-}" = "true" ]] ; then
 fi
 
 [[ -z "${ONEC_VERSION:-}" ]] && { log_failure "Переменная ONEC_VERSION не задана"; exit 1; }
-[[ -z "${DOCKER_REGISTRY_URL:-}" ]] && { log_failure "Переменная DOCKER_REGISTRY_URL не задана (нужна для базового образа onec-platform)"; exit 1; }
 
 onec_version=$ONEC_VERSION
 
