@@ -87,4 +87,3 @@ jobs:
           export ONEC_VERSION="${{ matrix.onec_version }}"
           ./src/build-onec-platform.sh
           ./src/build-vrunner.sh
-
