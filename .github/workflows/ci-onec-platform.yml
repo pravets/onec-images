@@ -5,8 +5,11 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'src/onec-platform/**'
+      - 'src/vrunner/**'
       - 'src/build-onec-platform.sh'
+      - 'src/build-vrunner.sh'
       - 'tests/test-onec-platform.sh'
+      - 'tests/test-vrunner.sh'
       - 'scripts/**'
       - '.github/workflows/ci-onec-platform.yml'
 
@@ -32,12 +35,23 @@ jobs:
             v8325: src/onec-platform/8.3.25.Dockerfile
             v8326: src/onec-platform/8.3.26.Dockerfile
             v8327: src/onec-platform/8.3.27.Dockerfile
+            # common: любые изменения в workflow'ах, скриптах, тестах или утилитах
+            common:
+              - 'src/onec-platform/**'
+              - 'src/vrunner/**'
+              - 'src/build-onec-platform.sh'
+              - 'src/build-vrunner.sh'
+              - 'tests/test-onec-platform.sh'
+              - 'tests/test-vrunner.sh'
+              - 'scripts/**'
+              - '.github/workflows/ci-onec-platform.yml'
 
       - id: set-matrix
         shell: bash
         run: |
           set -euo pipefail
           versions=()
+          all_versions=( '8.3.20.2290' '8.3.21.1895' '8.3.22.2557' '8.3.23.2236' '8.3.24.1819' '8.3.25.1633' '8.3.26.1656' '8.3.27.1644' )
           [[ '${{ steps.changes.outputs.v8320 }}' == 'true' ]] && versions+=('8.3.20.2290')
           [[ '${{ steps.changes.outputs.v8321 }}' == 'true' ]] && versions+=('8.3.21.1895')
           [[ '${{ steps.changes.outputs.v8322 }}' == 'true' ]] && versions+=('8.3.22.2557')
@@ -46,6 +60,11 @@ jobs:
           [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1633')
           [[ '${{ steps.changes.outputs.v8326 }}' == 'true' ]] && versions+=('8.3.26.1656')
           [[ '${{ steps.changes.outputs.v8327 }}' == 'true' ]] && versions+=('8.3.27.1644')
+
+          # Если изменились общие файлы (workflow/scripts/tests/etc.), запустить сборку для всех версий
+          if [[ '${{ steps.changes.outputs.common }}' == 'true' ]]; then
+            versions=("${all_versions[@]}")
+          fi
 
           if (( ${#versions[@]} == 0 )); then
             {
@@ -69,6 +88,7 @@ jobs:
     env:
       ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
       ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: 'local'
       PUSH_IMAGE: 'false'
       # опционально можно добавить усечённый SHA в тег, если понадобится хранить локально
       # CI_SUFFIX: -ci-${{ github.sha }}
@@ -84,3 +104,4 @@ jobs:
         run: |
           export ONEC_VERSION="${{ matrix.onec_version }}"
           ./src/build-onec-platform.sh
+          ./src/build-vrunner.sh

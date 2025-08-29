@@ -1,9 +1,9 @@
-name: Build onec-platform Docker Image
+name: Build vrunner Docker Image
 
 on:
   push:
     tags:
-      - 'onec_platform_*'   # реагировать на теги, начинающиеся с onec_platform_
+      - 'vrunner_*'   # реагировать на теги, начинающиеся с vrunner_
 
 jobs:
   build:
@@ -22,8 +22,8 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build, test and push onec-platform image
+      - name: Build, test and push vrunner image
         run: |
-          export ONEC_VERSION="${GITHUB_REF#refs/tags/onec_platform_}"
-          echo "Собираем onec-platform версии ${ONEC_VERSION}"
-          ./src/build-onec-platform.sh
+          export ONEC_VERSION="${GITHUB_REF#refs/tags/vrunner_}"
+          echo "Собираем vrunner версии ${ONEC_VERSION}"
+          ./src/build-vrunner.sh
