@@ -11,10 +11,11 @@
 - [Как собрать образы](#как-собрать-образы)
     - [Сборка через GitHub Actions](#сборка-через-github-actions)
     - [Локальная сборка](#локальная-сборка)
-- [1С:Исполнитель](#1сисполнитель)
-- [1С:EDT](#1сedt)
-- [1С:EDT CLI](#1сedt-cli)
+- [1С:Исполнитель (executor)](#1сисполнитель)
+- [1С:EDT (edt)](#1сedt)
+- [1С:EDT CLI (edtcli)](#1сedt-cli)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
+- [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
 
 ## Как собрать образы
 
