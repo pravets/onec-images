@@ -50,7 +50,13 @@ test_executor_version() {
   fi
 
   local expected actual tag
-  expected=$(echo "$EXECUTOR_VERSION" | sed 's/\(.*\)\./\1-/')
+  # If EXECUTOR_VERSION already contains a hyphen (e.g. 9.0.0-1), use it as-is.
+  # Otherwise, replace the last dot with a hyphen (e.g. 9.0.0.1 -> 9.0.0-1).
+  if [[ "$EXECUTOR_VERSION" == *-* ]]; then
+    expected="$EXECUTOR_VERSION"
+  else
+    expected=$(echo "$EXECUTOR_VERSION" | sed 's/\(.*\)\./\1-/')
+  fi
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" --version)
 
