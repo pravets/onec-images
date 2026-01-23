@@ -31,7 +31,7 @@ test_image_runs_1cedtcli() {
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" --help 2>/dev/null | head -n1)
 
-  if assert_contain "$actual" "$expected"; then
+  if assert_eq "$actual" "$expected"; then
     log_success "edtcli image runs 1cedtcli test passed"
   else
     log_failure "edtcli image runs 1cedtcli test failed"
@@ -45,7 +45,7 @@ test_image_runs_1cedtcli_sh() {
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" 1cedtcli.sh --help 2>/dev/null | head -n1)
 
-  if assert_contain "$actual" "$expected"; then
+  if assert_eq "$actual" "$expected"; then
     log_success "edtcli image runs 1cedtcli.sh test passed"
   else
     log_failure "edtcli image runs 1cedtcli.sh test failed"
