@@ -32,7 +32,7 @@ test_1cedtcli_is_running_version() {
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" 1cedtcli --help 2>/dev/null | head -n1)
 
-  if assert_contain "$actual" "$expected"; then
+  if assert_eq "$actual" "$expected"; then
     log_success "1cedtcli is running test passed"
   else
     log_failure "1cedtcli is running test failed"
@@ -47,13 +47,29 @@ test_1cedtcli_sh_is_running_version() {
   tag="$(resolve_image_tag)"
   actual=$(docker run --rm "$tag" 1cedtcli.sh --help 2>/dev/null | head -n1)
 
-  if assert_contain "$actual" "$expected"; then
+  if assert_eq "$actual" "$expected"; then
     log_success "1cedtcli.sh is running test passed"
   else
     log_failure "1cedtcli.sh is running test failed"
   fi
 }
 
+test_1cedt_version() {
+  log_header "Test :: 1cedt version matches EDT_VERSION"
+
+  local expected actual tag
+  expected="${EDT_VERSION}"
+  tag="$(resolve_image_tag)"
+  actual=$(docker run --rm "$tag" 1cedtcli -command version 2>/dev/null | tail -n1 | cut -d '.' -f 1-3)
+
+  if assert_eq "$actual" "$expected"; then
+    log_success "1cedt version test passed (expected: $expected, actual: $actual)"
+  else
+    log_failure "1cedt version test failed (expected: $expected, actual: $actual)"
+  fi
+}
+
 # test calls
 test_1cedtcli_is_running_version
 test_1cedtcli_sh_is_running_version
+test_1cedt_version
