@@ -56,8 +56,11 @@ RUN chmod +x ./1ce-installer-cli \
     && EDT_PATH="$(find /opt/1C/1CE -type f -name 1cedt -print -quit)" \
     && [ -n "$EDT_PATH" ] \
     && ln -sfn "$(dirname "$EDT_PATH")" /opt/1C/1CE/components/1cedt \
+    && JAVA_BIN="$(find /opt/1C/1CE/components -path '*/bin/java' -not -path '*/1c-edt-*/bin/java' -type f -print -quit)" \
+    && echo "Found Java at: $JAVA_BIN" \
+    && [ -n "$JAVA_BIN" ] || { echo "ERROR: Java not found in /opt/1C/1CE/components"; exit 1; } \
+    && ln -sfn "$(dirname "$(dirname "$JAVA_BIN")")" "$(dirname "$EDT_PATH")"/jre \
     && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
-#    && sed -i '/^-Xmx/a --add-modules=javafx.controls,javafx.fxml,javafx.web\n--module-path=/usr/share/openjfx/lib' "$(dirname "$EDT_PATH")"/1cedt.ini \
     && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group \
     && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
     && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.core.runtime \
