@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        edt_version: [ '2024.2.6', '2023.3.6' ]
+        edt_version: [ '2025.1.5', '2024.2.6', '2023.3.6' ]
 
     env:
       ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
