@@ -57,6 +57,14 @@ test_1cedtcli_sh_is_running_version() {
 test_1cedt_version() {
   log_header "Test :: 1cedt version matches EDT_VERSION"
 
+  local major_version
+  major_version=$(echo "$EDT_VERSION" | cut -d '.' -f 1)
+  
+  if [ "$major_version" -le 2025 ]; then
+    log_success "Test :: Тест версии 1cedt пропущен для EDT $EDT_VERSION (требуется > 2025)"
+    return 0
+  fi
+
   local expected actual tag
   expected="${EDT_VERSION}"
   tag="$(resolve_image_tag)"
