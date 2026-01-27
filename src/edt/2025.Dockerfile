@@ -28,8 +28,6 @@ RUN apt-get update \
     libgtk-3-0 \
     locales \
     ca-certificates \
-    openjfx \
-    libopenjfx-java \
   && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
