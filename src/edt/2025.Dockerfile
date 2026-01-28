@@ -3,8 +3,8 @@ ARG DOWNLOADER_REGISTRY_URL=sleemp
 ARG DOWNLOADER_IMAGE=onec-installer-downloader
 ARG DOWNLOADER_TAG=latest
 
-ARG BASE_IMAGE=eclipse-temurin
-ARG BASE_TAG=17
+ARG BASE_IMAGE=ubuntu
+ARG BASE_TAG=24.04
 ARG DOCKER_REGISTRY_URL=library
 
 FROM ${DOWNLOADER_REGISTRY_URL}/${DOWNLOADER_IMAGE}:${DOWNLOADER_TAG} AS downloader
@@ -28,8 +28,6 @@ RUN apt-get update \
     libgtk-3-0 \
     locales \
     ca-certificates \
-    openjfx \
-    libopenjfx-java \
   && apt-get clean \
   && rm -rf  \
     /var/lib/apt/lists/* \
@@ -54,25 +52,25 @@ WORKDIR /tmp/${downloads}
 ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20251120-2028
 RUN chmod +x ./1ce-installer-cli \
   && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings \
-  && RING_PATH="$(find /opt/1C/1CE -type f -name ring -print -quit)" \
-  && EDT_PATH="$(find /opt/1C/1CE -type f -name 1cedt -print -quit)" \
-  && [ -n "$RING_PATH" ] \
-  && [ -n "$EDT_PATH" ] \
-  && ln -sfn "$(dirname "$RING_PATH")" /opt/1C/1CE/components/1c-enterprise-ring \
-  && ln -sfn "$(dirname "$EDT_PATH")" /opt/1C/1CE/components/1cedt \
-  && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
-  && sed -i '/^-Xmx/a --add-modules=javafx.controls,javafx.fxml,javafx.web\n--module-path=/usr/share/openjfx/lib' "$(dirname "$EDT_PATH")"/1cedt.ini \
-  && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
-  && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
-  && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.core.runtime \
-  && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.osgi \
-  && rm -rf "$(dirname "$EDT_PATH")"/plugin-development \
-  && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
-  && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_v8_*.jar \
-  && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
-  && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.egit.doc_*.jar \
-  && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.platform.doc_*.jar \
-  && rm -rf /tmp/*
+    && EDT_PATH="$(find /opt/1C/1CE -type f -name 1cedt -print -quit)" \
+    && [ -n "$EDT_PATH" ] \
+    && ln -sfn "$(dirname "$EDT_PATH")" /opt/1C/1CE/components/1cedt \
+    && JAVA_BIN="$(find /opt/1C/1CE/components -path '*/bin/java' -not -path '*/1c-edt-*/bin/java' -type f -print -quit)" \
+    && echo "Found Java at: $JAVA_BIN" \
+    && [ -n "$JAVA_BIN" ] || { echo "ERROR: Java not found in /opt/1C/1CE/components"; exit 1; } \
+    && ln -sfn "$(dirname "$(dirname "$JAVA_BIN")")" "$(dirname "$EDT_PATH")"/jre \
+    && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
+    && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
+    && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
+    && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.core.runtime \
+    && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.osgi \
+    && rm -rf "$(dirname "$EDT_PATH")"/plugin-development \
+    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
+    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_v8_*.jar \
+    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
+    && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.egit.doc_*.jar \
+    && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.platform.doc_*.jar \
+    && rm -rf /tmp/*
 
 FROM base
 
@@ -92,7 +90,7 @@ ENV LC_ALL=ru_RU.UTF-8
 # Copy EDT
 COPY --from=installer /opt/1C/1CE /opt/1C/1CE
 
-ENV PATH="/opt/1C/1CE/components/1c-enterprise-ring:/opt/1C/1CE/components/1cedt:$PATH"
+ENV PATH="/opt/1C/1CE/components/1cedt:$PATH"
 
 # Обеспечить единообразие имён CLI (1cedtcli и 1cedtcli.sh)
 COPY scripts/ensure_edtcli_symlink.sh /usr/local/bin/ensure_edtcli_symlink.sh

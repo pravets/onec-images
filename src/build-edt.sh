@@ -35,7 +35,7 @@ if ! [[ "$MAJOR_VERSION" =~ ^[0-9]+$ ]]; then
 fi
 
 MIN_SUPPORTED=2023
-MAX_SUPPORTED=2024
+MAX_SUPPORTED=2025
 
 if [ "$MAJOR_VERSION" -lt "$MIN_SUPPORTED" ] || [ "$MAJOR_VERSION" -gt "$MAX_SUPPORTED" ]; then
     echo "Ошибка: неподдерживаемая версия $MAJOR_VERSION. Поддерживаются версии от $MIN_SUPPORTED до $MAX_SUPPORTED" >&2
