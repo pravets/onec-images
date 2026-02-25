@@ -60,8 +60,8 @@ test_1cedt_version() {
   local major_version
   major_version=$(echo "$EDT_VERSION" | cut -d '.' -f 1)
   
-  if [ "$major_version" -le 2025 ]; then
-    log_success "Test :: Тест версии 1cedt пропущен для EDT $EDT_VERSION (требуется > 2025)"
+  if [ "$major_version" -lt 2025 ]; then
+    log_success "Test :: Тест версии 1cedt пропущен для EDT $EDT_VERSION (требуется >= 2025)"
     return 0
   fi
 
