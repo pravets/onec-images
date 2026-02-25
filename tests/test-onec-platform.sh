@@ -12,6 +12,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+TEST_FAILED=0
+
 # Resolve image tag from env or defaults (matches build-onec-full.sh scheme)
 resolve_image_tag() {
   if [[ -n "${IMAGE_TAG:-}" ]]; then
@@ -66,7 +68,7 @@ test_create_infobase() {
     log_failure "Контейнер не завершился за 300 секунд"
     docker logs "$CONTAINER_NAME" || true
     set -e
-    exit 1
+    return 1
   fi
   docker logs "$CONTAINER_NAME" || true
 
@@ -85,11 +87,11 @@ test_create_infobase() {
     actual="$(LC_ALL=C tr -cd '0-9' < "$HOST_TMP_DIR/result.txt")"
     if ! assert_eq "$expected" "$actual" "Ожидали код результата 0"; then
       echo "hexdump(result.txt):"; hexdump -C "$HOST_TMP_DIR/result.txt" || true
-      exit 1
-   fi
+      return 1
+    fi
   else
     log_failure "Файл /tmp/result.txt не создан"
-    exit 1
+    return 1
   fi
   # Validate log contains expected message
   if [[ -f "$HOST_TMP_DIR/log.txt" ]]; then
@@ -97,24 +99,24 @@ test_create_infobase() {
     expected='Создание информационной базы ("File=/tmp/base;Locale = "ru_RU";") успешно завершено'
     local log_content
     log_content="$(cat "$HOST_TMP_DIR/log.txt")"
-    if assert_contain "$log_content" "$expected" "Лог не содержит ожидаемое сообщение"; then
-      :
-    else
-      exit 1
+    if ! assert_contain "$log_content" "$expected" "Лог не содержит ожидаемое сообщение"; then
+      return 1
     fi
   else
     log_failure "Файл /tmp/log.txt не создан"
-    exit 1
+    return 1
   fi
 
   # Validate database file exists
   if ! [[ -f "$HOST_TMP_DIR/1Cv8.1CD" ]]; then
     log_failure "Файл /tmp/base/1Cv8.1CD не создан"
-    exit 1
+    return 1
   fi
 
   log_success "CREATEINFOBASE test passed"
 }
 
 # Run test
-test_create_infobase
+test_create_infobase || TEST_FAILED=1
+
+[[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0

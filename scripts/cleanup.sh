@@ -8,7 +8,9 @@ if [ -n "${CI:-}" ] && [ "${CI}" != "false" ]; then
           /tmp/onec_username \
           /tmp/onec_password || true
     docker logout     || true
-    exit 0
+    # return — для корректной работы при source (не завершает вызывающий скрипт);
+    # exit — fallback при прямом запуске (return вне source/function даёт ошибку).
+    return 0 2>/dev/null || exit 0
 fi
 
 # Удаление файла с ключом

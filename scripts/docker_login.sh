@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Загрузка переменных среды
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/load_env.sh"
+
 # Проверка наличия необходимых переменных среды
 if [[ -z "$DOCKER_REGISTRY_URL" || -z "$DOCKER_LOGIN" || -z "$DOCKER_PASSWORD" ]]; then
     echo "Ошибка: Необходимо установить переменные среды DOCKER_REGISTRY_URL, DOCKER_LOGIN и DOCKER_PASSWORD."

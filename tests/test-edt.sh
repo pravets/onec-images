@@ -12,6 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+TEST_FAILED=0
+
 resolve_image_tag() {
   if [[ -n "${IMAGE_TAG:-}" ]]; then
     echo "$IMAGE_TAG"
@@ -36,6 +38,7 @@ test_1cedtcli_is_running_version() {
     log_success "1cedtcli is running test passed"
   else
     log_failure "1cedtcli is running test failed"
+    TEST_FAILED=1
   fi
 }
 
@@ -51,6 +54,7 @@ test_1cedtcli_sh_is_running_version() {
     log_success "1cedtcli.sh is running test passed"
   else
     log_failure "1cedtcli.sh is running test failed"
+    TEST_FAILED=1
   fi
 }
 
@@ -60,8 +64,8 @@ test_1cedt_version() {
   local major_version
   major_version=$(echo "$EDT_VERSION" | cut -d '.' -f 1)
   
-  if [ "$major_version" -le 2025 ]; then
-    log_success "Test :: Тест версии 1cedt пропущен для EDT $EDT_VERSION (требуется > 2025)"
+  if [ "$major_version" -lt 2025 ]; then
+    log_success "Test :: Тест версии 1cedt пропущен для EDT $EDT_VERSION (требуется >= 2025)"
     return 0
   fi
 
@@ -74,6 +78,7 @@ test_1cedt_version() {
     log_success "1cedt version test passed (expected: $expected, actual: $actual)"
   else
     log_failure "1cedt version test failed (expected: $expected, actual: $actual)"
+    TEST_FAILED=1
   fi
 }
 
@@ -81,3 +86,5 @@ test_1cedt_version() {
 test_1cedtcli_is_running_version
 test_1cedtcli_sh_is_running_version
 test_1cedt_version
+
+[[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
