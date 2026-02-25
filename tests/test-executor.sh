@@ -12,6 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+TEST_FAILED=0
+
 # Resolve image tag from env or defaults
 resolve_image_tag() {
   if [[ -n "${IMAGE_TAG:-}" ]]; then
@@ -64,8 +66,11 @@ test_executor_version() {
     log_success "executor version test passed"
   else
     log_failure "executor version test failed"
+    TEST_FAILED=1
   fi
 }
 
 # test calls
 test_executor_version
+
+[[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
