@@ -12,6 +12,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+TEST_FAILED=0
+
 resolve_image_tag() {
   if [[ -n "${IMAGE_TAG:-}" ]]; then
     echo "$IMAGE_TAG"
@@ -35,6 +37,7 @@ test_image_runs_1cedtcli() {
     log_success "edtcli image runs 1cedtcli test passed"
   else
     log_failure "edtcli image runs 1cedtcli test failed"
+    TEST_FAILED=1
   fi
 }
 
@@ -43,14 +46,17 @@ test_image_runs_1cedtcli_sh() {
   local expected actual tag
   expected="1C:EDT Интерфейс командной строки"
   tag="$(resolve_image_tag)"
-  actual=$(docker run --rm "$tag" 1cedtcli.sh --help 2>/dev/null | head -n1)
+  actual=$(docker run --rm --entrypoint 1cedtcli.sh "$tag" --help 2>/dev/null | head -n1)
 
   if assert_eq "$actual" "$expected"; then
     log_success "edtcli image runs 1cedtcli.sh test passed"
   else
     log_failure "edtcli image runs 1cedtcli.sh test failed"
+    TEST_FAILED=1
   fi
 }
 
 test_image_runs_1cedtcli
 test_image_runs_1cedtcli_sh
+
+[[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
