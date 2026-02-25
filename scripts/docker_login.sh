@@ -1,8 +1,10 @@
 #!/bin/bash
 
-# Загрузка переменных среды
+# Загрузка переменных среды (только вне CI)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/load_env.sh"
+if [[ -z "$CI" ]]; then
+    source "$SCRIPT_DIR/load_env.sh"
+fi
 
 # Проверка наличия необходимых переменных среды
 if [[ -z "$DOCKER_REGISTRY_URL" || -z "$DOCKER_LOGIN" || -z "$DOCKER_PASSWORD" ]]; then
