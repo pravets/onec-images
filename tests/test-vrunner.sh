@@ -12,6 +12,8 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/../tools/assert.sh"
 
+TEST_FAILED=0
+
 # Resolve image tag from env or defaults (matches build-vrunner.sh scheme)
 resolve_image_tag() {
   if [[ -n "${IMAGE_TAG:-}" ]]; then
@@ -40,11 +42,11 @@ test_run_without_params() {
   out=$(docker run --rm "$tag" 2>&1 | sed -n '1,20p' || true)
 
   # Basic checks — ensure binary identifies itself and prints commands list
-  if assert_contain "$out" "vanessa-runner v" "Ожидается префикс версии vanessa-runner"; then : ; else exit 1; fi
-  if assert_contain "$out" "Возможные команды:" "Ожидается список возможных команд"; then : ; else exit 1; fi
-  if assert_contain "$out" "help" "Ожидается команда help в списке"; then : ; else exit 1; fi
-  if assert_contain "$out" "version" "Ожидается команда version в списке"; then : ; else exit 1; fi
-  if assert_contain "$out" "init-project" "Ожидается команда init-project в списке"; then : ; else exit 1; fi
+  if ! assert_contain "$out" "vanessa-runner v" "Ожидается префикс версии vanessa-runner"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Возможные команды:" "Ожидается список возможных команд"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "help" "Ожидается команда help в списке"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "version" "Ожидается команда version в списке"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "init-project" "Ожидается команда init-project в списке"; then TEST_FAILED=1; return 1; fi
 
   log_success "vrunner run without params test passed"
 }
@@ -58,8 +60,8 @@ test_help_shows_commands() {
   local out
   out=$(docker run --rm "$tag" --help 2>&1 | sed -n '1,50p' || true)
 
-  if assert_contain "$out" "Возможные команды:" "--help должен содержать раздел 'Возможные команды'"; then : ; else exit 1; fi
-  if assert_contain "$out" "init-dev" "--help должен перечислять init-dev"; then : ; else exit 1; fi
+  if ! assert_contain "$out" "Возможные команды:" "--help должен содержать раздел 'Возможные команды'"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "init-dev" "--help должен перечислять init-dev"; then TEST_FAILED=1; return 1; fi
 
   log_success "vrunner --help test passed"
 }
@@ -75,17 +77,19 @@ test_init_dev_ibcmd() {
   out=$(docker run --rm "$tag" init-dev --ibcmd 2>&1 | sed -n '1,200p' || true)
 
   # Expected substrings in the output
-  if assert_contain "$out" "vanessa-runner v" "Ожидается префикс версии vanessa-runner"; then : ; else exit 1; fi
-  if assert_contain "$out" "Используется ibcmd" "Должно сообщаться об использовании ibcmd"; then : ; else exit 1; fi
-  if assert_contain "$out" "Создали базу данных" "Должно сообщаться о создании базы данных"; then : ; else exit 1; fi
-  if assert_contain "$out" "/home/usr1cv8/build/ib" "Должен быть путь к созданной базе"; then : ; else exit 1; fi
-  if assert_contain "$out" "Загрузка исходников не требуется" "Должно быть сообщение 'Загрузка исходников не требуется'"; then : ; else exit 1; fi
-  if assert_contain "$out" "Инициализация завершена" "Должно быть сообщение об успешной инициализации"; then : ; else exit 1; fi
+  if ! assert_contain "$out" "vanessa-runner v" "Ожидается префикс версии vanessa-runner"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Используется ibcmd" "Должно сообщаться об использовании ibcmd"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Создали базу данных" "Должно сообщаться о создании базы данных"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "/home/usr1cv8/build/ib" "Должен быть путь к созданной базе"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Загрузка исходников не требуется" "Должно быть сообщение 'Загрузка исходников не требуется'"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Инициализация завершена" "Должно быть сообщение об успешной инициализации"; then TEST_FAILED=1; return 1; fi
 
   log_success "vrunner init-dev --ibcmd test passed"
 }
 
 # Run tests
-test_run_without_params
-test_help_shows_commands
-test_init_dev_ibcmd
+test_run_without_params || true
+test_help_shows_commands || true
+test_init_dev_ibcmd || true
+
+[[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
