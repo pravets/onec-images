@@ -14,6 +14,7 @@
 - [1С:Исполнитель (executor)](#1сисполнитель)
 - [1С:EDT (edt)](#1сedt)
 - [1С:EDT CLI (edtcli)](#1сedt-cli)
+- [1С:EDT MCP Server (edt-mcp-server)](#1сedt-mcp-server)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
 
@@ -116,6 +117,46 @@
   2. Запуск: `./src/build-edtcli.sh`
 
 - Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edtcli:$EDT_VERSION`.
+
+[↑ Наверх](#onec-images)
+
+## 1С:EDT MCP Server
+
+Образ на базе `edt`, запускающий EDT через `xvfb` с установленным плагином [EDT-MCP](https://github.com/DitriXNew/EDT-MCP). Предоставляет MCP-сервер для LLM. Поддерживается EDT 2025.2.3 и выше.
+
+- Требования:
+  - `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD` — доступ к приватному реестру, содержащему базовый образ `edt`.
+  - `EDT_VERSION` — версия EDT (>= 2025.2.3).
+  - `EDT_MCP_VERSION` — версия плагина EDT-MCP (например `1.24.5`). Плагин устанавливается из [GitHub релизов проекта](https://github.com/DitriXNew/EDT-MCP/releases).
+
+- Переменные окружения (runtime):
+  - `MCP_SERVER_PORT` — порт MCP-сервера (по умолчанию `8765`).
+  - `WORKSPACE_DIR` — путь к workspace (по умолчанию `/edt`).
+
+- Триггер для сборки в Actions — тег вида `edt_mcp_server_ВерсияEDT_ВерсияMCP`, например `edt_mcp_server_2025.2.3_1.24.5`.
+
+- Локальная сборка:
+  1. Убедитесь, что в реестре доступен образ `edt:$EDT_VERSION`. Если образ отсутствует — скрипт попытается сделать `docker pull`, а при неудаче выполнит локальную сборку через `build-edt.sh`.
+  2. Запуск: `EDT_VERSION=2025.2.3 EDT_MCP_VERSION=1.24.5 ./src/build-edt-mcp-server.sh`
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edt-mcp-server:$EDT_VERSION`.
+
+- Пример запуска:
+  ```bash
+  # Запуск с портом по умолчанию (8765)
+  docker run -p 8765:8765 $DOCKER_REGISTRY_URL/edt-mcp-server:2025.2.3_1.24.5
+
+  # Запуск с кастомным портом
+  docker run -p 9999:9999 -e MCP_SERVER_PORT=9999 $DOCKER_REGISTRY_URL/edt-mcp-server:2025.2.3_1.24.5
+
+  # Запуск с монтированием локального workspace
+  docker run -p 8765:8765 -v /path/to/project:/edt $DOCKER_REGISTRY_URL/edt-mcp-server:2025.2.3_1.24.5
+  ```
+
+- Полезно знать:
+  - При запуске entrypoint-скрипт автоматически создаёт workspace с MCP-конфигом (если конфиг ранее не был создан).
+  - EDT запускается через `xvfb-run`.
+  - Дополнительные аргументы можно передать через `CMD` (они передаются в `1cedt`).
 
 [↑ Наверх](#onec-images)
 
