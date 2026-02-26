@@ -3,6 +3,7 @@ set -e
 
 WORKSPACE_DIR="${WORKSPACE_DIR:-/edt}"
 MCP_SERVER_PORT="${MCP_SERVER_PORT:-8765}"
+EDT_JAVA_XMX="${EDT_JAVA_XMX:-12g}"
 
 PREFS_DIR="${WORKSPACE_DIR}/.metadata/.plugins/org.eclipse.core.runtime/.settings"
 PREFS_FILE="${PREFS_DIR}/com.ditrix.edt.mcp.server.prefs"
@@ -46,6 +47,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Starting EDT MCP Server (workspace=${WORKSPACE_DIR}, port=${MCP_SERVER_PORT})"
+echo "Starting EDT MCP Server (workspace=${WORKSPACE_DIR}, port=${MCP_SERVER_PORT}, Xmx=${EDT_JAVA_XMX})"
 exec 1cedt -nosplash -consoleLog -noexit -data "$WORKSPACE_DIR" \
-  "$@"
+  "$@" \
+  -vmargs "-Xmx${EDT_JAVA_XMX}"

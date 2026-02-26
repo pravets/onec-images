@@ -125,6 +125,7 @@ test_health_endpoint() {
 
   docker run -d --name "$container_name" \
     -e MCP_SERVER_PORT=8765 \
+    -e EDT_JAVA_XMX=4g \
     -p "${host_port}:8765" \
     "$tag" >/dev/null
 
