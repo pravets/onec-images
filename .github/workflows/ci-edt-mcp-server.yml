@@ -4,6 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
+      - 'src/edt/**'
+      - 'src/build-edt.sh'
       - 'src/edt-mcp-server/**'
       - 'src/build-edt-mcp-server.sh'
       - 'tests/test-edt-mcp-server.sh'
