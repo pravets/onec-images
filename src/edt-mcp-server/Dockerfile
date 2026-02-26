@@ -35,7 +35,8 @@ RUN : "${EDT_MCP_VERSION:?EDT_MCP_VERSION argument is required}" \
          -repository "file:///tmp/mcp-repo" \
          -installIU com.ditrix.edt.mcp.server.feature.feature.group \
   && rm -rf /tmp/mcp-edt.zip /tmp/mcp-repo \
-  && rm -f /opt/1C/1CE/components/1cedt/configuration/*.log
+  && rm -f /opt/1C/1CE/components/1cedt/configuration/*.log \
+  && rm -f /tmp/.X*-lock /tmp/.X11-unix/X*
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
