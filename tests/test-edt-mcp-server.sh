@@ -62,7 +62,7 @@ test_entrypoint_creates_config() {
   # Run entrypoint with a short timeout — we only need it to create the config, not fully start EDT
   docker run --rm --name "$container_name" \
     -e WORKSPACE_DIR=/tmp/ws \
-    -e MCP_SERVER_PORT=9999 \
+    -e MCP_SERVER_PORT=8765 \
     --entrypoint /bin/bash \
     "$tag" \
     -c '
@@ -83,7 +83,7 @@ PREFS
   local config_output
   config_output=$(docker run --rm \
     -e WORKSPACE_DIR=/tmp/ws \
-    -e MCP_SERVER_PORT=9999 \
+    -e MCP_SERVER_PORT=8765 \
     --entrypoint /bin/bash \
     "$tag" \
     -c '
@@ -100,7 +100,7 @@ PREFS
       cat "$PREFS_FILE"
     ' 2>/dev/null)
 
-  if echo "$config_output" | grep -q "mcpServerPort=9999"; then
+  if echo "$config_output" | grep -q "mcpServerPort=8765"; then
     log_success "Entrypoint creates MCP config with correct port"
   else
     log_failure "MCP config not created or port mismatch. Output: ${config_output}"
@@ -115,8 +115,45 @@ PREFS
   fi
 }
 
+test_health_endpoint() {
+  log_header "Test :: MCP server responds on /health"
+  local tag container_name host_port timeout_sec elapsed http_code
+  tag="$(resolve_image_tag)"
+  container_name="edt-mcp-server-health-$$"
+  host_port=19765
+  timeout_sec=900
+
+  docker run -d --name "$container_name" \
+    -e MCP_SERVER_PORT=8765 \
+    -p "${host_port}:8765" \
+    "$tag" >/dev/null
+
+  elapsed=0
+  while ! curl -sf "http://localhost:${host_port}/health" >/dev/null 2>&1; do
+    if [[ $elapsed -ge $timeout_sec ]]; then
+      log_failure "MCP /health не отвечает после ${timeout_sec}s"
+      docker rm -f "$container_name" >/dev/null 2>&1
+      TEST_FAILED=1
+      return
+    fi
+    sleep 5
+    elapsed=$((elapsed + 5))
+  done
+
+  http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${host_port}/health" 2>/dev/null)
+  docker rm -f "$container_name" >/dev/null 2>&1
+
+  if [[ "$http_code" == "200" ]]; then
+    log_success "MCP /health вернул HTTP 200"
+  else
+    log_failure "MCP /health вернул HTTP ${http_code}, ожидался 200"
+    TEST_FAILED=1
+  fi
+}
+
 test_xvfb_installed
 test_plugin_jar_exists
 test_entrypoint_creates_config
+test_health_endpoint
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
