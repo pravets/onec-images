@@ -58,7 +58,6 @@ test_entrypoint_creates_config() {
   local tag container_name prefs_path
   tag="$(resolve_image_tag)"
   container_name="edt-mcp-server-test-$$"
-  prefs_path="/tmp/ws/.metadata/.plugins/org.eclipse.core.runtime/.settings/com.ditrix.edt.mcp.server.prefs"
 
   # Run entrypoint with a short timeout — we only need it to create the config, not fully start EDT
   docker run --rm --name "$container_name" \
