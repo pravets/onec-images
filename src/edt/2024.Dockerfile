@@ -60,7 +60,6 @@ RUN chmod +x ./1ce-installer-cli \
   && [ -n "$EDT_PATH" ] \
   && ln -sfn "$(dirname "$RING_PATH")" /opt/1C/1CE/components/1c-enterprise-ring \
   && ln -sfn "$(dirname "$EDT_PATH")" /opt/1C/1CE/components/1cedt \
-  && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
   && sed -i '/^-Xmx/a --add-modules=javafx.controls,javafx.fxml,javafx.web\n--module-path=/usr/share/openjfx/lib' "$(dirname "$EDT_PATH")"/1cedt.ini \
   && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
   && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
@@ -88,6 +87,8 @@ LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
 ENV LANG=ru_RU.UTF-8
 ENV LANGUAGE=ru_RU:ru
 ENV LC_ALL=ru_RU.UTF-8
+
+ENV EDT_JAVA_XMX=12g
 
 # Copy EDT
 COPY --from=installer /opt/1C/1CE /opt/1C/1CE

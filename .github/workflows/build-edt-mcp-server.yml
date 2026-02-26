@@ -1,0 +1,37 @@
+name: Build EDT MCP Server Docker Image
+
+on:
+  push:
+    tags:
+      - 'edt_mcp_server_*'   # реагировать на теги вида edt_mcp_server_2025.2.3_1.24.5
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        run: |
+          TAG="${GITHUB_REF#refs/tags/edt_mcp_server_}"
+          # Формат тега: <EDT_VERSION>_<EDT_MCP_VERSION>
+          # Пример: 2025.2.3_1.24.5
+          export EDT_VERSION="${TAG%%_*}"
+          export EDT_MCP_VERSION="${TAG#*_}"
+          if [[ -z "${EDT_VERSION}" || -z "${EDT_MCP_VERSION}" || "${EDT_VERSION}" == "${TAG}" || "${EDT_MCP_VERSION}" == "${TAG}" ]]; then
+            echo "Ошибка: некорректный формат тега '${TAG}'. Ожидается формат: <EDT_VERSION>_<EDT_MCP_VERSION> (например: 2025.2.3_1.24.5)"
+            exit 1
+          fi
+          echo "Собираем edt-mcp-server: EDT ${EDT_VERSION}, MCP ${EDT_MCP_VERSION}"
+          ./src/build-edt-mcp-server.sh

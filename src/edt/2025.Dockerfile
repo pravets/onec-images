@@ -59,17 +59,8 @@ RUN chmod +x ./1ce-installer-cli \
     && echo "Found Java at: $JAVA_BIN" \
     && [ -n "$JAVA_BIN" ] || { echo "ERROR: Java not found in /opt/1C/1CE/components"; exit 1; } \
     && ln -sfn "$(dirname "$(dirname "$JAVA_BIN")")" "$(dirname "$EDT_PATH")"/jre \
-    && sed -i -e 's/4096m/12288m/g' "$(dirname "$EDT_PATH")"/1cedt.ini \
     && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
     && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
-    && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.core.runtime \
-    && rm -rf "$(dirname "$EDT_PATH")"/configuration/org.eclipse.osgi \
-    && rm -rf "$(dirname "$EDT_PATH")"/plugin-development \
-    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_*.jar \
-    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.platform.doc_v8_*.jar \
-    && rm -f "$(dirname "$EDT_PATH")"/plugins/com._1c.g5.v8.dt.product.doc_*.jar \
-    && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.egit.doc_*.jar \
-    && rm -f "$(dirname "$EDT_PATH")"/plugins/org.eclipse.platform.doc_*.jar \
     && rm -rf /tmp/*
 
 FROM base
@@ -86,6 +77,8 @@ LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
 ENV LANG=ru_RU.UTF-8
 ENV LANGUAGE=ru_RU:ru
 ENV LC_ALL=ru_RU.UTF-8
+
+ENV EDT_JAVA_XMX=12g
 
 # Copy EDT
 COPY --from=installer /opt/1C/1CE /opt/1C/1CE
