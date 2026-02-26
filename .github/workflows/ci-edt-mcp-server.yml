@@ -1,0 +1,43 @@
+name: CI EDT MCP Server (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/edt-mcp-server/**'
+      - 'src/build-edt-mcp-server.sh'
+      - 'tests/test-edt-mcp-server.sh'
+      - 'scripts/**'
+      - '.github/workflows/ci-edt-mcp-server.yml'
+
+jobs:
+  build-edt-mcp-server:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edt_version: '2025.2.3'
+            mcp_version: '1.24.5'
+
+    env:
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      PUSH_IMAGE: 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build EDT MCP Server ${{ matrix.edt_version }} / MCP ${{ matrix.mcp_version }} (no push)
+        run: |
+          export EDT_VERSION="${{ matrix.edt_version }}"
+          export EDT_MCP_VERSION="${{ matrix.mcp_version }}"
+          ./src/build-edt-mcp-server.sh
