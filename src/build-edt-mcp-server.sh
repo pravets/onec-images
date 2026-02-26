@@ -42,7 +42,10 @@ fi
 IMAGE_TAG="${registry_prefix}edt-mcp-server:${edt_version}_${EDT_MCP_VERSION}${CI_SUFFIX:-}"
 BASE_IMAGE_TAG="${registry_prefix}edt:${edt_version}"
 
-if ! docker image inspect "$BASE_IMAGE_TAG" >/dev/null 2>&1; then
+if [[ "${FORCE_BUILD_BASE:-}" == "true" ]]; then
+    echo "Принудительная локальная сборка базового образа edt:${edt_version} (FORCE_BUILD_BASE=true)"
+    PUSH_IMAGE=${PUSH_IMAGE} EDT_VERSION="$edt_version" CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" "${SCRIPT_DIR}/build-edt.sh"
+elif ! docker image inspect "$BASE_IMAGE_TAG" >/dev/null 2>&1; then
     if [[ -n "${DOCKER_LOGIN:-}" && -n "${DOCKER_PASSWORD:-}" && -n "${DOCKER_REGISTRY_URL:-}" ]]; then
         source "${SCRIPT_DIR}/../scripts/docker_login.sh"
     fi

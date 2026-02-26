@@ -30,6 +30,7 @@ jobs:
       DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
       PUSH_IMAGE: 'false'
+      FORCE_BUILD_BASE: 'true'
 
     steps:
       - name: Checkout
