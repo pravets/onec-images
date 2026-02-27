@@ -53,53 +53,36 @@ test_plugin_jar_exists() {
   fi
 }
 
-test_entrypoint_creates_config() {
-  log_header "Test :: entrypoint creates CodePilot1C config"
-  local tag
+test_entrypoint_has_jvm_args() {
+  log_header "Test :: entrypoint passes CodePilot1C JVM system properties"
+  local tag output
   tag="$(resolve_image_tag)"
 
-  local config_output
-  config_output=$(docker run --rm \
-    -e WORKSPACE_DIR=/tmp/ws \
-    -e MCP_HOST_PORT=8765 \
-    --entrypoint /bin/bash \
+  output=$(docker run --rm \
+    --entrypoint cat \
     "$tag" \
-    -c '
-      WORKSPACE_DIR="${WORKSPACE_DIR:-/edt}"
-      MCP_HOST_PORT="${MCP_HOST_PORT:-8765}"
-      PREFS_DIR="${WORKSPACE_DIR}/.metadata/.plugins/org.eclipse.core.runtime/.settings"
-      PREFS_FILE="${PREFS_DIR}/com.codepilot1c.core.prefs"
-      mkdir -p "$PREFS_DIR"
-      cat > "$PREFS_FILE" <<PREFS
-eclipse.preferences.version=1
-mcp.host.enabled=true
-mcp.host.http.enabled=true
-mcp.host.http.bindAddress=0.0.0.0
-mcp.host.http.port=${MCP_HOST_PORT}
-PREFS
-      cat "$PREFS_FILE"
-    ' 2>/dev/null)
+    /usr/local/bin/entrypoint.sh 2>/dev/null)
 
-  if echo "$config_output" | grep -q "mcp.host.http.port=8765"; then
-    log_success "Entrypoint creates CodePilot1C config with correct port"
+  if echo "$output" | grep -q "codepilot.mcp.host.enabled=true"; then
+    log_success "entrypoint contains -Dcodepilot.mcp.host.enabled=true"
   else
-    log_failure "CodePilot1C config not created or port mismatch. Output: ${config_output}"
+    log_failure "entrypoint is missing -Dcodepilot.mcp.host.enabled=true"
     TEST_FAILED=1
   fi
 
-  if echo "$config_output" | grep -q "mcp.host.enabled=true"; then
-    log_success "CodePilot1C config has mcp.host.enabled=true"
+  if echo "$output" | grep -q "codepilot.mcp.host.http.port"; then
+    log_success "entrypoint contains -Dcodepilot.mcp.host.http.port"
   else
-    log_failure "CodePilot1C config missing mcp.host.enabled. Output: ${config_output}"
+    log_failure "entrypoint is missing -Dcodepilot.mcp.host.http.port"
     TEST_FAILED=1
   fi
 }
 
-test_mcp_endpoint() {
-  log_header "Test :: CodePilot1C MCP host responds on /mcp"
+test_health_endpoint() {
+  log_header "Test :: CodePilot1C MCP host responds on /health"
   local tag container_name host_port timeout_sec elapsed http_code
   tag="$(resolve_image_tag)"
-  container_name="edt-codepilot1c-mcp-$$"
+  container_name="edt-codepilot1c-health-$$"
   host_port=19766
   timeout_sec=900
 
@@ -110,13 +93,9 @@ test_mcp_endpoint() {
     "$tag" >/dev/null
 
   elapsed=0
-  while true; do
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${host_port}/mcp" 2>/dev/null || echo "000")
-    if [[ "$http_code" != "000" ]]; then
-      break
-    fi
+  while ! curl -sf "http://localhost:${host_port}/health" >/dev/null 2>&1; do
     if [[ $elapsed -ge $timeout_sec ]]; then
-      log_failure "CodePilot1C MCP /mcp не отвечает после ${timeout_sec}s"
+      log_failure "CodePilot1C /health не отвечает после ${timeout_sec}s"
       docker rm -f "$container_name" >/dev/null 2>&1
       TEST_FAILED=1
       return
@@ -125,19 +104,20 @@ test_mcp_endpoint() {
     elapsed=$((elapsed + 5))
   done
 
+  http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${host_port}/health" 2>/dev/null)
   docker rm -f "$container_name" >/dev/null 2>&1
 
-  if [[ "$http_code" != "000" ]]; then
-    log_success "CodePilot1C MCP /mcp вернул HTTP ${http_code}"
+  if [[ "$http_code" == "200" ]]; then
+    log_success "CodePilot1C /health вернул HTTP 200"
   else
-    log_failure "CodePilot1C MCP /mcp не отвечает"
+    log_failure "CodePilot1C /health вернул HTTP ${http_code}, ожидался 200"
     TEST_FAILED=1
   fi
 }
 
 test_xvfb_installed
 test_plugin_jar_exists
-test_entrypoint_creates_config
-test_mcp_endpoint
+test_entrypoint_has_jvm_args
+test_health_endpoint
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
