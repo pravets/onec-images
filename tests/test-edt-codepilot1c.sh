@@ -53,38 +53,14 @@ test_plugin_jar_exists() {
   fi
 }
 
-test_entrypoint_has_jvm_args() {
-  log_header "Test :: entrypoint passes CodePilot1C JVM system properties"
-  local tag output
+test_mcp_endpoint() {
+  log_header "Test :: CodePilot1C MCP host responds on /mcp with tools list"
+  local tag container_name host_port timeout_sec elapsed response_body
   tag="$(resolve_image_tag)"
-
-  output=$(docker run --rm \
-    --entrypoint cat \
-    "$tag" \
-    /usr/local/bin/entrypoint.sh 2>/dev/null)
-
-  if echo "$output" | grep -q "codepilot.mcp.host.enabled=true"; then
-    log_success "entrypoint contains -Dcodepilot.mcp.host.enabled=true"
-  else
-    log_failure "entrypoint is missing -Dcodepilot.mcp.host.enabled=true"
-    TEST_FAILED=1
-  fi
-
-  if echo "$output" | grep -q "codepilot.mcp.host.http.port"; then
-    log_success "entrypoint contains -Dcodepilot.mcp.host.http.port"
-  else
-    log_failure "entrypoint is missing -Dcodepilot.mcp.host.http.port"
-    TEST_FAILED=1
-  fi
-}
-
-test_health_endpoint() {
-  log_header "Test :: CodePilot1C MCP host responds on /health"
-  local tag container_name host_port timeout_sec elapsed http_code
-  tag="$(resolve_image_tag)"
-  container_name="edt-codepilot1c-health-$$"
+  container_name="edt-codepilot1c-mcp-$$"
   host_port=19766
   timeout_sec=900
+  local mcp_request='{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
   docker run -d --name "$container_name" \
     -e MCP_HOST_PORT=8765 \
@@ -93,9 +69,17 @@ test_health_endpoint() {
     "$tag" >/dev/null
 
   elapsed=0
-  while ! curl -sf "http://localhost:${host_port}/health" >/dev/null 2>&1; do
+  while true; do
+    response_body=$(curl -s \
+      -X POST \
+      -H "Content-Type: application/json" \
+      -d "$mcp_request" \
+      "http://localhost:${host_port}/mcp" 2>/dev/null)
+    if echo "$response_body" | grep -q '"tools"'; then
+      break
+    fi
     if [[ $elapsed -ge $timeout_sec ]]; then
-      log_failure "CodePilot1C /health не отвечает после ${timeout_sec}s"
+      log_failure "CodePilot1C /mcp не вернул список инструментов после ${timeout_sec}s. Последний ответ: ${response_body}"
       docker rm -f "$container_name" >/dev/null 2>&1
       TEST_FAILED=1
       return
@@ -104,20 +88,12 @@ test_health_endpoint() {
     elapsed=$((elapsed + 5))
   done
 
-  http_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:${host_port}/health" 2>/dev/null)
   docker rm -f "$container_name" >/dev/null 2>&1
-
-  if [[ "$http_code" == "200" ]]; then
-    log_success "CodePilot1C /health вернул HTTP 200"
-  else
-    log_failure "CodePilot1C /health вернул HTTP ${http_code}, ожидался 200"
-    TEST_FAILED=1
-  fi
+  log_success "CodePilot1C /mcp вернул список инструментов"
 }
 
 test_xvfb_installed
 test_plugin_jar_exists
-test_entrypoint_has_jvm_args
-test_health_endpoint
+test_mcp_endpoint
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
