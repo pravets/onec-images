@@ -1,0 +1,48 @@
+name: CI EDT CodePilot1C (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/edt/**'
+      - 'src/build-edt.sh'
+      - 'src/edt-codepilot1c/**'
+      - 'src/build-edt-codepilot1c.sh'
+      - 'tests/test-edt-codepilot1c.sh'
+      - 'scripts/**'
+      - '.github/workflows/ci-edt-codepilot1c.yml'
+
+jobs:
+  build-edt-codepilot1c:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edt_version: '2025.2.3'
+            codepilot_version: '0.1.7.20260226-1201'
+
+    env:
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      PUSH_IMAGE: 'false'
+      FORCE_BUILD_BASE: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build EDT CodePilot1C ${{ matrix.edt_version }} / CodePilot ${{ matrix.codepilot_version }} (no push)
+        run: |
+          export EDT_VERSION="${{ matrix.edt_version }}"
+          export EDT_CODEPILOT_VERSION="${{ matrix.codepilot_version }}"
+          ./src/build-edt-codepilot1c.sh
