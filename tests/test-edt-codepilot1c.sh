@@ -53,6 +53,33 @@ test_plugin_jar_exists() {
   fi
 }
 
+test_ini_contains_mcp_settings() {
+  log_header "Test :: 1cedt.ini contains CodePilot1C MCP settings"
+  local tag ini_content
+  tag="$(resolve_image_tag)"
+  ini_content=$(docker run --rm --entrypoint cat "$tag" /opt/1C/1CE/components/1cedt/1cedt.ini 2>/dev/null)
+
+  local all_ok=1
+  for key in \
+    'codepilot.mcp.host.enabled=true' \
+    'codepilot.mcp.host.http.enabled=true' \
+    'codepilot.mcp.host.http.bindAddress=0.0.0.0' \
+    'codepilot.mcp.host.http.port=8765' \
+    'codepilot.mcp.host.policy.defaultMutationDecision=ALLOW' \
+    'codepilot.mcp.host.policy.exposedTools=*'; do
+    if ! echo "$ini_content" | grep -qF "$key"; then
+      log_failure "Missing in 1cedt.ini: ${key}"
+      all_ok=0
+    fi
+  done
+
+  if [[ $all_ok -eq 1 ]]; then
+    log_success "All CodePilot1C MCP settings found in 1cedt.ini"
+  else
+    TEST_FAILED=1
+  fi
+}
+
 test_mcp_endpoint() {
   log_header "Test :: CodePilot1C MCP host responds on /mcp with tools list"
   local tag container_name host_port timeout_sec elapsed response_body
@@ -63,7 +90,6 @@ test_mcp_endpoint() {
   local mcp_request='{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
 
   docker run -d --name "$container_name" \
-    -e MCP_HOST_PORT=8765 \
     -e EDT_JAVA_XMX=4g \
     -p "${host_port}:8765" \
     "$tag" >/dev/null
@@ -94,6 +120,7 @@ test_mcp_endpoint() {
 
 test_xvfb_installed
 test_plugin_jar_exists
+test_ini_contains_mcp_settings
 test_mcp_endpoint
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
