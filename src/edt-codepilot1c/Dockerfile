@@ -17,6 +17,7 @@ LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
     xvfb \
+    xdg-utils \
     curl \
     unzip \
   && apt-get clean \
@@ -42,6 +43,7 @@ RUN : "${EDT_CODEPILOT_VERSION:?EDT_CODEPILOT_VERSION argument is required}" \
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+ENV MCP_HOST_PORT=0.0.0.0
 ENV MCP_HOST_PORT=8765
 ENV WORKSPACE_DIR=/edt
 
