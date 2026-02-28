@@ -17,7 +17,7 @@ rm -f /tmp/.X*-lock /tmp/.X11-unix/X*
 DISPLAY_NUM=99
 export DISPLAY=:${DISPLAY_NUM}
 
-Xvfb ":${DISPLAY_NUM}" -screen 0 1024x768x24 -ac -nolisten tcp &
+Xvfb ":${DISPLAY_NUM}" -screen 0 1024x768x24 -ac -nolisten tcp >/dev/null 2>&1 &
 XVFB_PID=$!
 
 # Ждём готовности Xvfb
