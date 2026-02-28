@@ -6,7 +6,6 @@ FROM ${DOCKER_REGISTRY_URL}/edt:${EDT_VERSION}
 ARG EDT_VERSION
 ARG EDT_CODEPILOT_VERSION
 ARG BUILD_DATE
-ARG MCP_HOST_PORT=8765
 
 LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
       edt.version="${EDT_VERSION}" \
@@ -40,14 +39,22 @@ RUN : "${EDT_CODEPILOT_VERSION:?EDT_CODEPILOT_VERSION argument is required}" \
   && rm -f /opt/1C/1CE/components/1cedt/configuration/*.log \
   && rm -f /tmp/.X*-lock /tmp/.X11-unix/X*
 
+# Записываем параметры CodePilot1C MCP в 1cedt.ini
+RUN printf '%s\n' \
+      '-Dcodepilot.mcp.host.enabled=true' \
+      '-Dcodepilot.mcp.host.http.enabled=true' \
+      '-Dcodepilot.mcp.host.http.bindAddress=0.0.0.0' \
+      '-Dcodepilot.mcp.host.http.port=8765' \
+      '-Dcodepilot.mcp.host.policy.defaultMutationDecision=ALLOW' \
+      '-Dcodepilot.mcp.host.policy.exposedTools=*' \
+      >> /opt/1C/1CE/components/1cedt/1cedt.ini
+
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENV MCP_HOST_PORT=0.0.0.0
-ENV MCP_HOST_PORT=8765
 ENV WORKSPACE_DIR=/edt
 
-EXPOSE ${MCP_HOST_PORT}
+EXPOSE 8765
 
 VOLUME ["/edt"]
 WORKDIR /edt
