@@ -3,7 +3,7 @@ name: Build EDT MCP Server Docker Image
 on:
   push:
     tags:
-      - 'edt_mcp_server_*'   # реагировать на теги вида edt_mcp_server_2025.2.3_1.24.5
+      - 'edt-mcp-server_*'   # реагировать на теги вида edt-mcp-server_2025.2.3_1.24.5
 
 jobs:
   build:
@@ -24,7 +24,7 @@ jobs:
 
       - name: Build and push Docker image
         run: |
-          TAG="${GITHUB_REF#refs/tags/edt_mcp_server_}"
+          TAG="${GITHUB_REF#refs/tags/edt-mcp-server_}"
           # Формат тега: <EDT_VERSION>_<EDT_MCP_VERSION>
           # Пример: 2025.2.3_1.24.5
           export EDT_VERSION="${TAG%%_*}"
