@@ -15,6 +15,7 @@
 - [1С:EDT (edt)](#1сedt)
 - [1С:EDT CLI (edtcli)](#1сedt-cli)
 - [1С:EDT MCP Server (edt-mcp-server)](#1сedt-mcp-server)
+- [1С:EDT CodePilot1C MCP (edt-codepilot1c)](#1cedt-codepilot1c-mcp)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
 
@@ -178,6 +179,67 @@
     ```bash
     docker run -e EDT_JAVA_XMX=4g -p 8765:8765 $DOCKER_REGISTRY_URL/edt-mcp-server:2025.2.3_1.24.5
     ```
+
+[↑ Наверх](#onec-images)
+
+## 1C:EDT CodePilot1C MCP
+
+Образ на базе `edt`, запускающий 1C:EDT в headless-режиме с установленным плагином [CodePilot1C](https://github.com/ondysss/codepilot1c-edt). Предоставляет MCP HTTP-сервер на порту `8765` для подключения LLM-агентов напрямую к EDT — без графического интерфейса.
+
+- Требования:
+  - `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD` — доступ к приватному реестру, содержащему базовый образ `edt`.
+  - `EDT_VERSION` — версия EDT (совпадает с базовым образом), например `2025.2.3`.
+  - `EDT_CODEPILOT_VERSION` — версия плагина CodePilot1C (например `0.1.7.20260226-1201`). Плагин устанавливается из [GitHub-релизов проекта ondysss/codepilot1c-edt](https://github.com/ondysss/codepilot1c-edt/releases) через механизм p2 director.
+
+- Триггер для сборки в Actions — тег вида `edt_codepilot1c_ВерсияEDT_ВерсияCodePilot`, например `edt_codepilot1c_2025.2.3_0.1.7.20260226-1201`.
+
+- Локальная сборка:
+  1. Убедитесь, что в реестре доступен образ `edt:$EDT_VERSION`. Если образ отсутствует локально — скрипт авторизуется и попытается сделать `docker pull`. Если образа нет и в реестре — скрипт выполнит локальную сборку базового `edt` через `build-edt.sh`, а затем соберёт `edt-codepilot1c`.
+  2. Запустите сборку:
+     ```bash
+     EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+     ```
+  - Без публикации в реестр:
+    ```bash
+    PUSH_IMAGE=false EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+    ```
+  - Принудительная пересборка базового образа `edt` перед сборкой:
+    ```bash
+    FORCE_BUILD_BASE=true EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+    ```
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edt-codepilot1c:$EDT_VERSION_$EDT_CODEPILOT_VERSION`.
+
+- Переменные окружения (runtime):
+  - `WORKSPACE_DIR` — путь к workspace EDT (по умолчанию `/edt`).
+  - `EDT_JAVA_XMX` — размер кучи JVM (по умолчанию `12g`). Применяется к параметру `-Xmx` в `1cedt.ini` при каждом старте контейнера.
+  - `EDT_CODEPILOT_BEARERTOKEN` — Bearer-токен для аутентификации MCP API. Если не задан — при первом запуске автоматически генерируется с помощью `uuidgen` и записывается в `1cedt.ini`; сгенерированный токен выводится в лог-вывод. Если задан — значение переменной записывается (или обновляется) в `1cedt.ini`.
+
+- Примеры запуска:
+  ```bash
+  # Запуск с автогенерацией Bearer-токена (токен будет выведен в логи)
+  docker run -d -p 8765:8765 $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+
+  # Запуск с явным Bearer-токеном
+  docker run -d -p 8765:8765 \
+    -e EDT_CODEPILOT_BEARERTOKEN=my-secret-token \
+    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+
+  # Запуск с монтированием workspace и ограниченной памятью JVM
+  docker run -d -p 8765:8765 \
+    -e EDT_JAVA_XMX=4g \
+    -e EDT_CODEPILOT_BEARERTOKEN=my-secret-token \
+    -v /path/to/edt-workspace:/edt \
+    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+  ```
+
+- Полезно знать:
+  - EDT запускается в headless-режиме (`eclipse.ignoreApp=true`, `osgi.noShutdown=true`) — без GUI.
+  - MCP-сервер по умолчанию принимает все мутации (`defaultMutationDecision=ALLOW`) и открывает весь инструментарий (`exposedTools=*`).
+  - Параметры CodePilot прописаны статически в `1cedt.ini` во время сборки; runtime-переменные управляют только Bearer-токеном и `-Xmx`.
+  - `FORCE_BUILD_BASE=true` — принудительно пересобрать базовый образ `edt` перед сборкой `edt-codepilot1c`.
+  - `NO_CACHE=true` — отключить кэш сборки.
+  - `DOCKER_SYSTEM_PRUNE=true` — предварительно очистить неиспользуемые слои/объекты Docker.
 
 [↑ Наверх](#onec-images)
 
