@@ -23,7 +23,7 @@ jobs:
       matrix:
         include:
           - edt_version: '2025.2.3'
-            codepilot_version: '0.1.7.20260226-1201'
+            codepilot_version: '0.1.7.20260301-0607'
 
     env:
       ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
