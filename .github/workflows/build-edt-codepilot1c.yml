@@ -1,0 +1,39 @@
+name: Build EDT CodePilot1C Docker Image
+
+on:
+  push:
+    tags:
+      - 'edt_codepilot1c_*'   # реагировать на теги вида edt_codepilot1c_2025.2.3_0.1.7.20260226-1201
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        run: |
+          TAG="${GITHUB_REF#refs/tags/edt_codepilot1c_}"
+          # Формат тега: <EDT_VERSION>_<EDT_CODEPILOT_VERSION>
+          # Пример: 2025.2.3_0.1.7.20260226-1201
+          export EDT_VERSION="${TAG%%_*}"
+          export EDT_CODEPILOT_VERSION="${TAG#*_}"
+          if [[ -z "${EDT_VERSION}" || -z "${EDT_CODEPILOT_VERSION}" || "${EDT_VERSION}" == "${TAG}" || "${EDT_CODEPILOT_VERSION}" == "${TAG}" ]]; then
+            echo "Ошибка: некорректный формат тега '${TAG}'. Ожидается формат: <EDT_VERSION>_<EDT_CODEPILOT_VERSION> (например: 2025.2.3_0.1.7.20260226-1201)"
+            exit 1
+          fi
+          echo "Собираем edt-codepilot1c: EDT ${EDT_VERSION}, CodePilot ${EDT_CODEPILOT_VERSION}"
+          ./src/build-edt-codepilot1c.sh

@@ -17,6 +17,7 @@ LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
     xvfb \
+    xdg-utils \
     curl \
     unzip \
   && apt-get clean \
