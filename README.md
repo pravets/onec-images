@@ -189,23 +189,23 @@
 - Требования:
   - `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD` — доступ к приватному реестру, содержащему базовый образ `edt`.
   - `EDT_VERSION` — версия EDT (совпадает с базовым образом), например `2025.2.3`.
-  - `EDT_CODEPILOT_VERSION` — версия плагина CodePilot1C (например `0.1.7.20260226-1201`). Плагин устанавливается из [GitHub-релизов проекта ondysss/codepilot1c-edt](https://github.com/ondysss/codepilot1c-edt/releases) через механизм p2 director.
+  - `EDT_CODEPILOT_VERSION` — версия плагина CodePilot1C (например `0.1.7.20260301-0607`). Плагин устанавливается из [GitHub-релизов проекта ondysss/codepilot1c-edt](https://github.com/ondysss/codepilot1c-edt/releases) через механизм p2 director.
 
-- Триггер для сборки в Actions — тег вида `edt_codepilot1c_ВерсияEDT_ВерсияCodePilot`, например `edt_codepilot1c_2025.2.3_0.1.7.20260226-1201`.
+- Триггер для сборки в Actions — тег вида `edt_codepilot1c_ВерсияEDT_ВерсияCodePilot`, например `edt_codepilot1c_2025.2.3_0.1.7.20260301-0607`.
 
 - Локальная сборка:
   1. Убедитесь, что в реестре доступен образ `edt:$EDT_VERSION`. Если образ отсутствует локально — скрипт авторизуется и попытается сделать `docker pull`. Если образа нет и в реестре — скрипт выполнит локальную сборку базового `edt` через `build-edt.sh`, а затем соберёт `edt-codepilot1c`.
   2. Запустите сборку:
      ```bash
-     EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+     EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260301-0607 ./src/build-edt-codepilot1c.sh
      ```
   - Без публикации в реестр:
     ```bash
-    PUSH_IMAGE=false EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+    PUSH_IMAGE=false EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260301-0607 ./src/build-edt-codepilot1c.sh
     ```
   - Принудительная пересборка базового образа `edt` перед сборкой:
     ```bash
-    FORCE_BUILD_BASE=true EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260226-1201 ./src/build-edt-codepilot1c.sh
+    FORCE_BUILD_BASE=true EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260301-0607 ./src/build-edt-codepilot1c.sh
     ```
 
 - Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edt-codepilot1c:$EDT_VERSION_$EDT_CODEPILOT_VERSION`.
@@ -218,19 +218,19 @@
 - Примеры запуска:
   ```bash
   # Запуск с автогенерацией Bearer-токена (токен будет выведен в логи)
-  docker run -d -p 8765:8765 $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+  docker run -d -p 8765:8765 $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260301-0607
 
   # Запуск с явным Bearer-токеном
   docker run -d -p 8765:8765 \
     -e EDT_CODEPILOT_BEARERTOKEN=my-secret-token \
-    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260301-0607
 
   # Запуск с монтированием workspace и ограниченной памятью JVM
   docker run -d -p 8765:8765 \
     -e EDT_JAVA_XMX=4g \
     -e EDT_CODEPILOT_BEARERTOKEN=my-secret-token \
     -v /path/to/edt-workspace:/edt \
-    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260226-1201
+    $DOCKER_REGISTRY_URL/edt-codepilot1c:2025.2.3_0.1.7.20260301-0607
   ```
 
 - Полезно знать:
