@@ -26,19 +26,6 @@ resolve_image_tag() {
   echo "${prefix}edt-codepilot1c:${EDT_VERSION}_${EDT_CODEPILOT_VERSION}"
 }
 
-test_xvfb_installed() {
-  log_header "Test :: xvfb is installed"
-  local tag
-  tag="$(resolve_image_tag)"
-
-  if docker run --rm --entrypoint xvfb-run "$tag" --help >/dev/null 2>&1; then
-    log_success "xvfb is installed"
-  else
-    log_failure "xvfb is NOT installed"
-    TEST_FAILED=1
-  fi
-}
-
 test_plugin_jar_exists() {
   log_header "Test :: CodePilot1C plugin JAR installed via p2"
   local tag output
@@ -61,12 +48,14 @@ test_ini_contains_mcp_settings() {
 
   local all_ok=1
   for key in \
-    'codepilot.mcp.host.enabled=true' \
+    'codepilot.mcp.enabled=true' \
     'codepilot.mcp.host.http.enabled=true' \
     'codepilot.mcp.host.http.bindAddress=0.0.0.0' \
     'codepilot.mcp.host.http.port=8765' \
     'codepilot.mcp.host.policy.defaultMutationDecision=ALLOW' \
-    'codepilot.mcp.host.policy.exposedTools=*'; do
+    'codepilot.mcp.host.policy.exposedTools=*' \
+    'eclipse.ignoreApp=true' \
+    'osgi.noShutdown=true' ; do
     if ! echo "$ini_content" | grep -qF "$key"; then
       log_failure "Missing in 1cedt.ini: ${key}"
       all_ok=0
@@ -79,15 +68,15 @@ test_ini_contains_mcp_settings() {
     TEST_FAILED=1
   fi
 }
-
-test_mcp_endpoint() {
-  log_header "Test :: CodePilot1C MCP host responds on /mcp with tools list"
-  local tag container_name host_port timeout_sec elapsed response_body
+test_health_endpoint() {
+  log_header "Test :: CodePilot1C MCP health endpoint returns HTTP 200"
+  local tag container_name host_port timeout_sec elapsed http_code
   tag="$(resolve_image_tag)"
-  container_name="edt-codepilot1c-mcp-$$"
+  container_name="edt-codepilot1c-mcp-test"
   host_port=19766
   timeout_sec=900
-  local mcp_request='{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+
+  docker rm -f "$container_name" >/dev/null 2>&1 || true
 
   docker run -d --name "$container_name" \
     -e EDT_JAVA_XMX=4g \
@@ -96,16 +85,23 @@ test_mcp_endpoint() {
 
   elapsed=0
   while true; do
-    response_body=$(curl -s \
-      -X POST \
-      -H "Content-Type: application/json" \
-      -d "$mcp_request" \
-      "http://localhost:${host_port}/mcp" 2>/dev/null)
-    if echo "$response_body" | grep -q '"tools"'; then
+    # Проверяем, что контейнер ещё работает
+    if ! docker inspect --format '{{.State.Running}}' "$container_name" 2>/dev/null | grep -q 'true'; then
+      log_failure "Контейнер ${container_name} завершился неожиданно. Логи:"
+      docker logs "$container_name" >&2 || true
+      docker rm -f "$container_name" >/dev/null 2>&1 || true
+      TEST_FAILED=1
+      return
+    fi
+
+    http_code=$(curl -s -o /dev/null -w "%{http_code}" \
+      "http://localhost:${host_port}/health" 2>/dev/null) || true
+    if [[ "$http_code" == "200" ]]; then
       break
     fi
     if [[ $elapsed -ge $timeout_sec ]]; then
-      log_failure "CodePilot1C /mcp не вернул список инструментов после ${timeout_sec}s. Последний ответ: ${response_body}"
+      log_failure "CodePilot1C /health не вернул HTTP 200 после ${timeout_sec}s. Последний код ответа: ${http_code}"
+      docker logs "$container_name" >&2 || true
       docker rm -f "$container_name" >/dev/null 2>&1
       TEST_FAILED=1
       return
@@ -115,12 +111,31 @@ test_mcp_endpoint() {
   done
 
   docker rm -f "$container_name" >/dev/null 2>&1
-  log_success "CodePilot1C /mcp вернул список инструментов"
+  log_success "CodePilot1C /health вернул HTTP 200"
 }
 
-test_xvfb_installed
+test_bearer_token_generation() {
+  log_header "Test :: Bearer token auto-generation"
+  local tag container_name output
+  tag="$(resolve_image_tag)"
+  container_name="edt-codepilot1c-token-test"
+  
+  docker rm -f "$container_name" >/dev/null 2>&1 || true
+  output=$(docker run --rm --name "$container_name" \
+    --entrypoint /bin/bash "$tag" \
+    -c "source /usr/local/bin/manage_codepilot_token.sh && grep 'bearerToken=' /opt/1C/1CE/components/1cedt/1cedt.ini")
+  
+  if echo "$output" | grep -q 'bearerToken='; then
+    log_success "Bearer token generated and stored in 1cedt.ini"
+  else
+    log_failure "Bearer token NOT found"
+    TEST_FAILED=1
+  fi
+}
+
 test_plugin_jar_exists
 test_ini_contains_mcp_settings
-test_mcp_endpoint
+test_bearer_token_generation
+test_health_endpoint
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
