@@ -6,7 +6,7 @@
 
 Всё необходимое для сборки docker-образов с платформой 1С и сопутствующими инструментами.
 
-Проект вдохновлён идеями [onec-docker](https://github.com/firstBitMarksistskaya/onec-docker). Но некоторые подходы переосмыслены. Например мне не трубуются образы агента Jenkins, k8s, gitsync и я не планирую их делать и поддерживать, поэтому если они вам требуются, то рекомендую обратиться к [onec-docker](https://github.com/firstBitMarksistskaya/onec-docker)
+Проект вдохновлён идеями [onec-docker](https://github.com/firstBitMarksistskaya/onec-docker). Но некоторые подходы переосмыслены. Например мне не трeбуются образы агента Jenkins, k8s, gitsync и я не планирую их делать и поддерживать, поэтому если они вам требуются, то рекомендую обратиться к [onec-docker](https://github.com/firstBitMarksistskaya/onec-docker). При этом мне нужна автоматизированная сборка в GitHub Actions и минимально возможное покрытие образов тестами.
 
 ## Оглавление
 
