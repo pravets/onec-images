@@ -60,8 +60,9 @@ test_help_shows_commands() {
   local out
   out=$(docker run --rm "$tag" --help 2>&1 | sed -n '1,50p' || true)
 
-  if ! assert_contain "$out" "Возможные команды:" "--help должен содержать раздел 'Возможные команды'"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "init-dev" "--help должен перечислять init-dev"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "Доступные команды:" "--help должен содержать раздел 'Доступные команды'"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "help, h       Вывести справку по командам" "--help должен перечислять help"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "cf            Операции с конфигурацией" "--help должен перечислять cf"; then TEST_FAILED=1; return 1; fi
 
   log_success "vrunner --help test passed"
 }
