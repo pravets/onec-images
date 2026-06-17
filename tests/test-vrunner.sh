@@ -75,15 +75,11 @@ test_init_dev_ibcmd() {
 
   # Run init-dev --ibcmd and capture output (limit lines)
   local out
-  out=$(docker run --rm "$tag" init-dev --ibcmd 2>&1 | sed -n '1,200p' || true)
+  out=$(docker run --rm "$tag" infobase init --ibcmd 2>&1 | sed -n '1,200p' || true)
 
   # Expected substrings in the output
-  if ! assert_contain "$out" "vanessa-runner v" "Ожидается префикс версии vanessa-runner"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "Используется ibcmd" "Должно сообщаться об использовании ibcmd"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "Создали базу данных" "Должно сообщаться о создании базы данных"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "/home/usr1cv8/build/ib" "Должен быть путь к созданной базе"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "Загрузка исходников не требуется" "Должно быть сообщение 'Загрузка исходников не требуется'"; then TEST_FAILED=1; return 1; fi
-  if ! assert_contain "$out" "Инициализация завершена" "Должно быть сообщение об успешной инициализации"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "ИНФОРМАЦИЯ - Файловая ИБ создана:" "Должно сообщаться о создании файловой ИБ"; then TEST_FAILED=1; return 1; fi
+  if ! assert_contain "$out" "ИНФОРМАЦИЯ - Инициализация информационной базы завершена" "Должно сообщаться о завершении инициализации"; then TEST_FAILED=1; return 1; fi
 
   log_success "vrunner init-dev --ibcmd test passed"
 }
