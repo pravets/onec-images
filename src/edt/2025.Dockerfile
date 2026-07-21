@@ -60,6 +60,7 @@ RUN chmod +x ./1ce-installer-cli \
     && [ -n "$JAVA_BIN" ] || { echo "ERROR: Java not found in /opt/1C/1CE/components"; exit 1; } \
     && ln -sfn "$(dirname "$(dirname "$JAVA_BIN")")" "$(dirname "$EDT_PATH")"/jre \
     && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
+    && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -uninstallIU com.e1c.edt.ai.feature.feature.group \
     && rm -f "$(dirname "$EDT_PATH")"/configuration/*.log \
     && rm -rf /tmp/*
 
