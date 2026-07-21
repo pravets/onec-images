@@ -65,7 +65,7 @@ jobs:
           [[ '${{ steps.changes.outputs.v8324 }}' == 'true' ]] && versions+=('8.3.24.1819')
           [[ '${{ steps.changes.outputs.v8325 }}' == 'true' ]] && versions+=('8.3.25.1633')
           [[ '${{ steps.changes.outputs.v8326 }}' == 'true' ]] && versions+=('8.3.26.1656')
-          [[ '${{ steps.changes.outputs.v8327 }}' == 'true' ]] && versions+=('8.3.27.1644')
+          [[ '${{ steps.changes.outputs.v8327 }}' == 'true' ]] && versions+=('8.3.27.2214')
 
           # Если изменились общие файлы (workflow/scripts/tests/etc.), запустить сборку для всех версий
           if [[ '${{ steps.changes.outputs.common }}' == 'true' ]]; then
