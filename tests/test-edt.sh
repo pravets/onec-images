@@ -82,9 +82,33 @@ test_1cedt_version() {
   fi
 }
 
+test_workmate_plugin_absent() {
+  log_header "Test :: 1C:Workmate plugin is absent"
+
+  local major_version
+  major_version=$(echo "$EDT_VERSION" | cut -d '.' -f 1)
+
+  if [ "$major_version" -lt 2025 ]; then
+    log_success "Test :: Проверка отсутствия Workmate пропущена для EDT $EDT_VERSION (требуется >= 2025)"
+    return 0
+  fi
+
+  local tag output
+  tag="$(resolve_image_tag)"
+  output=$(docker run --rm --entrypoint find "$tag" /opt/1C/1CE/components/1cedt/plugins/ /opt/1C/1CE/components/1cedt/features/ -name 'com.e1c.edt.ai*' 2>/dev/null)
+
+  if [ -z "$output" ]; then
+    log_success "1C:Workmate plugin is absent"
+  else
+    log_failure "1C:Workmate plugin artifacts found: ${output}"
+    TEST_FAILED=1
+  fi
+}
+
 # test calls
 test_1cedtcli_is_running_version
 test_1cedtcli_sh_is_running_version
 test_1cedt_version
+test_workmate_plugin_absent
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
