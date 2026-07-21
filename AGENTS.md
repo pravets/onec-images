@@ -18,7 +18,7 @@
 
 - **Docker + BuildKit** — многоэтапные сборки, передача секретов через `--mount=type=secret`.
 - **Bash** — язык всех скриптов сборки, тестов и утилит.
-- **Ubuntu** — базовый образ для платформы 1С, EDT (2025), Исполнителя.
+- **Ubuntu** — базовый образ для платформы 1С, EDT (2025–2026), Исполнителя.
 - **eclipse-temurin:17** — базовый образ для EDT 2023–2024.
 - **Mono + OneScript (oscript)** — для образов `vrunner` / `vrunner2`.
 - **GitHub Actions** — CI/CD: сборка по тегам и PR-проверки.
@@ -33,7 +33,7 @@ onec-images/
 ├── scripts/               # Вспомогательные bash-скрипты
 ├── src/                   # Dockerfile и скрипты сборки образов
 │   ├── build-*.sh         # Точки входа для сборки каждого образа
-│   ├── edt/               # Dockerfile базовых образов EDT (2023, 2024, 2025)
+│   ├── edt/               # Dockerfile базовых образов EDT (2023, 2024, 2025, 2026)
 │   ├── edtcli/            # Образ-обёртка с ENTRYPOINT=1cedtcli
 │   ├── edt-mcp-server/    # EDT + MCP-сервер (EDT-MCP)
 │   ├── edt-codepilot1c/   # EDT + CodePilot1C MCP Server
@@ -60,7 +60,7 @@ onec-images/
 ### `edt`
 
 - Базовый образ 1С:EDT без `ENTRYPOINT` (для совместимости с GitLab CI).
-- Поддерживаются версии **2023, 2024, 2025**.
+- Поддерживаются версии **2023, 2024, 2025, 2026**.
 - В образе устанавливается плагин запрета редактирования (`edt-editing`) из update-site.
 - `EDT_JAVA_XMX=12g` по умолчанию.
 
@@ -227,7 +227,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | Workflow | Триггер | Примечание |
 |----------|---------|------------|
 | `ci-onec-platform.yml` | изменения в платформе / vrunner / скриптах | Матрица версий 8.3.20–8.3.27 |
-| `ci-edt.yml` | изменения в EDT / edtcli | Матрица 2023.3.6, 2024.2.6, 2025.1.5, 2025.2.3 |
+| `ci-edt.yml` | изменения в EDT / edtcli | Матрица 2023.3.6, 2024.2.6, 2025.1.5, 2025.2.3, 2026.1.2 |
 | `ci-executor.yml` | изменения в executor | Матрица версий Исполнителя |
 | `ci-edt-mcp-server.yml` | изменения в edt-mcp-server | EDT 2025.2.3 + MCP 1.24.5 |
 | `ci-edt-codepilot1c.yml` | изменения в edt-codepilot1c | EDT 2025.2.3 + CodePilot 0.1.7.20260301-0607 |
