@@ -57,7 +57,7 @@ ENV OSCRIPTBIN=/home/usr1cv8/.local/share/ovm/current/bin
 ENV PATH="$OSCRIPTBIN:$PATH"
 
 RUN ln -s /home/usr1cv8/.local/share/ovm/stable /home/usr1cv8/.local/share/ovm/current \
-  && opm install vanessa-runner add
+  && opm install vanessa-runner@SNAPSHOT add
 
 ENTRYPOINT ["vrunner"]
 CMD ["--help"]
