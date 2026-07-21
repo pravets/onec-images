@@ -9,8 +9,8 @@ FROM ${DOCKER_REGISTRY_URL}/onec-platform:${ONEC_VERSION}
 ARG ONEC_VERSION
 ARG BUILD_DATE
 LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
-      org.opencontainers.image.title="vrunner" \
-      org.opencontainers.image.description="vrunner поверх onec-platform ${ONEC_VERSION}" \
+      org.opencontainers.image.title="vrunner2" \
+      org.opencontainers.image.description="vrunner2 (vanessa-runner 2.6.1) поверх onec-platform ${ONEC_VERSION}" \
       org.opencontainers.image.created="${BUILD_DATE}"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -57,7 +57,7 @@ ENV OSCRIPTBIN=/home/usr1cv8/.local/share/ovm/current/bin
 ENV PATH="$OSCRIPTBIN:$PATH"
 
 RUN ln -s /home/usr1cv8/.local/share/ovm/stable /home/usr1cv8/.local/share/ovm/current \
-  && opm install vanessa-runner@SNAPSHOT add
+  && opm install vanessa-runner@2.6.1 add
 
 ENTRYPOINT ["vrunner"]
 CMD ["--help"]
