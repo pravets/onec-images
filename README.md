@@ -90,7 +90,7 @@
 
 - Локальная сборка:
   1. Заполните `.env` значениями `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD`, `ONEC_USERNAME`, `ONEC_PASSWORD`.
-  2. Укажите версию EDT (поддерживаются мажорные версии с 2023 по 2025; версии ниже 2023 не поддерживаются, так как начиная с 2023 появилась `1cedtcli` и была упразднена `ring`):
+  2. Укажите версию EDT (поддерживаются мажорные версии с 2023 по 2026; версии ниже 2023 не поддерживаются, так как начиная с 2023 появилась `1cedtcli` и была упразднена `ring`):
      - однократно в текущей сессии: `export EDT_VERSION=2024.1.3`
      - либо инлайном при запуске: `EDT_VERSION=2024.1.3 ./src/build-edt.sh`
   3. Запустите сборку: `./src/build-edt.sh`.
@@ -106,6 +106,7 @@
   - Переменная `NO_CACHE=true` отключит кэш сборки.
   - Переменная `DOCKER_SYSTEM_PRUNE=true` перед сборкой очистит ненужные слои/объекты Docker.
   - Образ собирается с предустановленным [плагином запрета редактирования (Disable Editing Plugin)](https://gitlab.com/marmyshev/edt-editing). Плагин устанавливается из [update‑site плагина](https://marmyshev.gitlab.io/edt-editing/update) в процессе сборки.
+  - В образах EDT 2025.1 и новее плагин **1C:Workmate** (`com.e1c.edt.ai.feature.feature.group`) удаляется на этапе сборки через Eclipse p2 director.
   - Базовый образ `edt` собирается БЕЗ `ENTRYPOINT` для корректной работы в GitLab CI. Запуск `1cedtcli` выполняется явно (в производных образах, таких как `edtcli`, задаётся `ENTRYPOINT`).
 
 Скрипт для локальной сборки — `build-edt.sh`.

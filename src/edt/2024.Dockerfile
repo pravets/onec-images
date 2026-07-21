@@ -35,6 +35,8 @@ RUN apt-get update \
     /var/lib/apt/lists/* \
     /var/cache/debconf \
     /tmp/* \
+  && mkdir -p /usr/share/locale \
+  && touch /usr/share/locale/locale.alias \
   && localedef -i ru_RU -c -f UTF-8 -A /usr/share/locale/locale.alias ru_RU.UTF-8
 
 FROM base AS installer
@@ -51,7 +53,7 @@ COPY --from=downloader /tmp/${downloads} /tmp/${downloads}
 
 WORKDIR /tmp/${downloads}
 
-ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20251120-2028
+ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20260330-0921
 RUN chmod +x ./1ce-installer-cli \
   && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings \
   && RING_PATH="$(find /opt/1C/1CE -type f -name ring -print -quit)" \
