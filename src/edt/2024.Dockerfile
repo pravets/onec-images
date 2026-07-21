@@ -53,7 +53,7 @@ COPY --from=downloader /tmp/${downloads} /tmp/${downloads}
 
 WORKDIR /tmp/${downloads}
 
-ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20251120-2028
+ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20260330-0921
 RUN chmod +x ./1ce-installer-cli \
   && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings \
   && RING_PATH="$(find /opt/1C/1CE -type f -name ring -print -quit)" \
