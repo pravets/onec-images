@@ -24,11 +24,13 @@ RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
        ca-certificates \
        gnupg \
-       dirmngr \
        wget \
        locales \
-  && gpg --homedir /tmp --batch --yes --no-default-keyring --keyring /usr/share/keyrings/mono-official-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF \
-  && echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] http://download.mono-project.com/repo/debian stable-buster/snapshots/$MONO_VERSION main" > /etc/apt/sources.list.d/mono-official-stable.list \
+  && wget -qO- https://download.mono-project.com/repo/xamarin.gpg \
+     | gpg --dearmor -o /usr/share/keyrings/mono-official-archive-keyring.gpg \
+  && chmod +r /usr/share/keyrings/mono-official-archive-keyring.gpg \
+  && echo "deb [signed-by=/usr/share/keyrings/mono-official-archive-keyring.gpg] https://download.mono-project.com/repo/ubuntu stable-focal/snapshots/$MONO_VERSION main" > /etc/apt/sources.list.d/mono-official-stable.list \
+  && printf 'Package: mono* libmono* ca-certificates-mono\nPin: origin download.mono-project.com\nPin-Priority: 1001\n' > /etc/apt/preferences.d/mono \
   && apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
        mono-runtime \
@@ -36,7 +38,7 @@ RUN apt-get update \
        libmono-i18n4.0-all \
        libmono-system-runtime-serialization4.0-cil \
        libicu-dev \
-  && rm -rf /etc/apt/sources.list.d/mono-official-stable.list \
+  && rm -rf /etc/apt/sources.list.d/mono-official-stable.list /etc/apt/preferences.d/mono \
   && apt-get update \
   && cert-sync --user /etc/ssl/certs/ca-certificates.crt \
   && rm -rf  \
