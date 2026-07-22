@@ -1,4 +1,4 @@
-name: CI EDT MCP Server (build-only on PR)
+name: CI EDT vrunner (build-only on PR)
 
 on:
   pull_request:
@@ -6,22 +6,21 @@ on:
     paths:
       - 'src/edt/**'
       - 'src/build-edt.sh'
-      - 'src/edt-mcp-server/**'
-      - 'src/build-edt-mcp-server.sh'
-      - 'tests/test-edt-mcp-server.sh'
+      - 'src/edt-vrunner/**'
+      - 'src/build-edt-vrunner.sh'
+      - 'tests/test-edt-vrunner.sh'
       - 'scripts/**'
-      - '.github/workflows/ci-edt-mcp-server.yml'
+      - 'tools/assert.sh'
+      - '.github/workflows/ci-edt-vrunner.yml'
 
 jobs:
-  build-edt-mcp-server:
+  build-edt-vrunner:
     if: ${{ !github.event.pull_request.head.repo.fork }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - edt_version: '2025.2.3'
-            mcp_version: '1.24.5'
+        edt_version: [ '2026.1.2', '2025.2.6', '2025.1.5', '2024.2.6' ]
 
     env:
       ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
@@ -39,8 +38,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build EDT MCP Server ${{ matrix.edt_version }} / MCP ${{ matrix.mcp_version }} (no push)
+      - name: Build EDT vrunner ${{ matrix.edt_version }} (no push)
         run: |
           export EDT_VERSION="${{ matrix.edt_version }}"
-          export EDT_MCP_VERSION="${{ matrix.mcp_version }}"
-          ./src/build-edt-mcp-server.sh
+          ./src/build-edt-vrunner.sh

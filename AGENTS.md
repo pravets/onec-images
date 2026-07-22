@@ -82,6 +82,12 @@ onec-images/
 - Headless-режим EDT, HTTP MCP-сервер на порту `8765`.
 - Bearer-токен генерируется автоматически при первом запуске или берётся из `EDT_CODEPILOT_BEARERTOKEN`.
 
+### `edt-vrunner`
+
+- vanessa-runner 3.x (канал `SNAPSHOT`) поверх базового образа `edt`.
+- Образ без серверной платформы 1С; команды `vrunner`, зависящие от `ibcmd` или информационной базы, недоступны.
+- Поддерживается EDT `>= 2024.2.6`.
+
 ### `executor`
 
 - Образ 1С:Исполнителя.
@@ -157,6 +163,9 @@ EDT_VERSION=2025.2.3 EDT_MCP_VERSION=1.24.5 ./src/build-edt-mcp-server.sh
 # EDT CodePilot1C
 EDT_VERSION=2025.2.3 EDT_CODEPILOT_VERSION=0.1.7.20260301-0607 ./src/build-edt-codepilot1c.sh
 
+# EDT vanessa-runner
+EDT_VERSION=2025.2.3 ./src/build-edt-vrunner.sh
+
 # Исполнитель
 EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh
 
@@ -206,6 +215,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 - `test-onec-platform.sh` — создаёт файловую информационную базу через `1cv8 CREATEINFOBASE`.
 - `test-edt.sh` — проверяет, что `1cedtcli` / `1cedtcli.sh` запускаются и версия совпадает.
 - `test-edt-mcp-server.sh` / `test-edt-codepilot1c.sh` — проверяют установку плагина, настройки `1cedt.ini` и доступность `/health`.
+- `test-edt-vrunner.sh` — проверяет запуск `vrunner`/`vrunner --help` и доступность `1cedtcli`.
 - `test-executor.sh` — проверяет вывод `--version`.
 - `test-vrunner.sh` / `test-vrunner2.sh` — проверяют help и создание базы через `init-dev --ibcmd`.
 
@@ -222,6 +232,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `executor_<VERSION>` | `build-executor.yml` | `executor` |
 | `vrunner_<VERSION>` | `build-vrunner.yml` | `vrunner` |
 | `vrunner2_<VERSION>` | `build-vrunner2.yml` | `vrunner2` |
+| `edt-vrunner_<EDT_VERSION>` | `build-edt-vrunner.yml` | `edt-vrunner` |
 
 ### PR-проверки (build-only, без пуша)
 
@@ -232,6 +243,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `ci-executor.yml` | изменения в executor | Матрица версий Исполнителя |
 | `ci-edt-mcp-server.yml` | изменения в edt-mcp-server | EDT 2025.2.3 + MCP 1.24.5 |
 | `ci-edt-codepilot1c.yml` | изменения в edt-codepilot1c | EDT 2025.2.3 + CodePilot 0.1.7.20260301-0607 |
+| `ci-edt-vrunner.yml` | изменения в edt-vrunner | Матрица EDT 2024.2.6, 2025.1.5, 2025.2.6, 2026.1.2 |
 
 В PR-workflow используется `DOCKER_REGISTRY_URL=local` и `PUSH_IMAGE=false`.
 

@@ -18,6 +18,7 @@
 - [1С:EDT CLI (edtcli)](#1сedt-cli)
 - [1С:EDT MCP Server (edt-mcp-server)](#1сedt-mcp-server)
 - [1С:EDT CodePilot1C MCP (edt-codepilot1c)](#1cedt-codepilot1c-mcp)
+- [EDT vanessa-runner (edt-vrunner)](#edt-vanessa-runner-edt-vrunner)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
 
@@ -241,6 +242,53 @@
   - MCP-сервер по умолчанию принимает все мутации (`defaultMutationDecision=ALLOW`) и открывает весь инструментарий (`exposedTools=*`).
   - Параметры CodePilot прописаны статически в `1cedt.ini` во время сборки; runtime-переменные управляют только Bearer-токеном и `-Xmx`.
   - `FORCE_BUILD_BASE=true` — принудительно пересобрать базовый образ `edt` перед сборкой `edt-codepilot1c`.
+  - `NO_CACHE=true` — отключить кэш сборки.
+  - `DOCKER_SYSTEM_PRUNE=true` — предварительно очистить неиспользуемые слои/объекты Docker.
+
+[↑ Наверх](#onec-images)
+
+## EDT vanessa-runner (edt-vrunner)
+
+Образ на базе `edt` с предустановленным vanessa-runner 3.x (канал `SNAPSHOT`). Предназначен для CI/CD-сценариев, где уже используется EDT и требуется vanessa-runner. В отличие от образа `vrunner`, здесь отсутствует серверная платформа 1С, поэтому команды, зависящие от `ibcmd` или информационной базы, недоступны.
+
+- Требования:
+  - `DOCKER_REGISTRY_URL`, `DOCKER_LOGIN`, `DOCKER_PASSWORD` — доступ к приватному реестру, содержащему базовый образ `edt`.
+  - `EDT_VERSION` — версия EDT (совпадает с базовым образом), например `2025.2.3`.
+  - `ONEC_USERNAME`, `ONEC_PASSWORD` — для пересборки базового образа `edt`, если он отсутствует в реестре.
+
+- Триггер для сборки в Actions — тег вида `edt-vrunner_<EDT_VERSION>`, например `edt-vrunner_2025.2.3`.
+
+- Локальная сборка:
+  1. Убедитесь, что в реестре доступен образ `edt:$EDT_VERSION`. Если образ отсутствует — скрипт попытается сделать `docker pull`, а при неудаче выполнит локальную сборку через `build-edt.sh`.
+  2. Запустите сборку:
+     ```bash
+     EDT_VERSION=2025.2.3 ./src/build-edt-vrunner.sh
+     ```
+  - Без публикации в реестр:
+    ```bash
+    PUSH_IMAGE=false EDT_VERSION=2025.2.3 ./src/build-edt-vrunner.sh
+    ```
+  - Принудительная пересборка базового образа `edt` перед сборкой:
+    ```bash
+    FORCE_BUILD_BASE=true EDT_VERSION=2025.2.3 ./src/build-edt-vrunner.sh
+    ```
+
+- Результат локальной сборки — образ с тегом `$DOCKER_REGISTRY_URL/edt-vrunner:$EDT_VERSION`.
+
+- Примеры запуска:
+  ```bash
+  # Справка по vrunner
+  docker run --rm $DOCKER_REGISTRY_URL/edt-vrunner:2025.2.3 --help
+
+  # Проверка версии vanessa-runner
+  docker run --rm $DOCKER_REGISTRY_URL/edt-vrunner:2025.2.3 version
+
+  # Запуск произвольной команды vrunner
+  docker run --rm $DOCKER_REGISTRY_URL/edt-vrunner:2025.2.3 <команда>
+  ```
+
+- Полезно знать:
+  - `FORCE_BUILD_BASE=true` — принудительно пересобрать базовый образ `edt` перед сборкой `edt-vrunner`.
   - `NO_CACHE=true` — отключить кэш сборки.
   - `DOCKER_SYSTEM_PRUNE=true` — предварительно очистить неиспользуемые слои/объекты Docker.
 
