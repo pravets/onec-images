@@ -10,6 +10,7 @@ on:
       - 'src/build-edt-vrunner.sh'
       - 'tests/test-edt-vrunner.sh'
       - 'scripts/**'
+      - 'tools/assert.sh'
       - '.github/workflows/ci-edt-vrunner.yml'
 
 jobs:
