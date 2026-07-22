@@ -1,0 +1,43 @@
+name: CI EDT vrunner (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/edt/**'
+      - 'src/build-edt.sh'
+      - 'src/edt-vrunner/**'
+      - 'src/build-edt-vrunner.sh'
+      - 'tests/test-edt-vrunner.sh'
+      - 'scripts/**'
+      - '.github/workflows/ci-edt-vrunner.yml'
+
+jobs:
+  build-edt-vrunner:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        edt_version: [ '2026.1.2', '2025.2.6', '2025.1.5', '2024.2.6' ]
+
+    env:
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      PUSH_IMAGE: 'false'
+      FORCE_BUILD_BASE: 'true'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build EDT vrunner ${{ matrix.edt_version }} (no push)
+        run: |
+          export EDT_VERSION="${{ matrix.edt_version }}"
+          ./src/build-edt-vrunner.sh
