@@ -25,6 +25,16 @@ jobs:
 
       - name: Build, test and push bsl-sonar-scanner-cli image
         run: |
-          export ONEC_VERSION="${GITHUB_REF#refs/tags/bsl-sonar-scanner-cli_}"
-          echo "Собираем bsl-sonar-scanner-cli с onec-platform версии ${ONEC_VERSION}"
+          version_part="${GITHUB_REF#refs/tags/bsl-sonar-scanner-cli_}"
+          # Формат тега: bsl-sonar-scanner-cli_<SONAR_SCANNER_VERSION>[-<ONEC_VERSION>]
+          # Разделитель '-' — в SONAR_SCANNER_VERSION может встречаться '_'
+          # (например 12.1.0.3233_8.0.1). ONEC_VERSION опционален:
+          # если не задан, build-скрипт использует прибитую молотком версию.
+          if [[ "$version_part" == *-* ]]; then
+            export SONAR_SCANNER_VERSION="${version_part%%-*}"
+            export ONEC_VERSION="${version_part#*-}"
+          else
+            export SONAR_SCANNER_VERSION="$version_part"
+          fi
+          echo "Собираем bsl-sonar-scanner-cli: сканер ${SONAR_SCANNER_VERSION}, onec-platform ${ONEC_VERSION:-<молоток>}"
           ./src/build-bsl-sonar-scanner-cli.sh
