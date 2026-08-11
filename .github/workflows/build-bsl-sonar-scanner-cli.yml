@@ -3,7 +3,8 @@ name: Build bsl-sonar-scanner-cli Docker Image
 on:
   push:
     tags:
-      - 'bsl-sonar-scanner-cli_*'   # реагировать на теги, начинающиеся с bsl-sonar-scanner-cli_
+      - 'bsl-sonar-scanner-cli_*'   # версионированная сборка: bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]
+      - 'bsl-sonar-scanner-cli-v*'  # релизная сборка: bsl-sonar-scanner-cli-v<N> (дефолтные версии)
 
 jobs:
   build:
@@ -25,16 +26,24 @@ jobs:
 
       - name: Build, test and push bsl-sonar-scanner-cli image
         run: |
-          version_part="${GITHUB_REF#refs/tags/bsl-sonar-scanner-cli_}"
-          # Формат тега: bsl-sonar-scanner-cli_<SONAR_SCANNER_VERSION>[-<ONEC_VERSION>]
-          # Разделитель '-' — в SONAR_SCANNER_VERSION может встречаться '_'
-          # (например 12.1.0.3233_8.0.1). ONEC_VERSION опционален:
-          # если не задан, build-скрипт использует прибитую молотком версию.
-          if [[ "$version_part" == *-* ]]; then
-            export SONAR_SCANNER_VERSION="${version_part%%-*}"
-            export ONEC_VERSION="${version_part#*-}"
+          ref="${GITHUB_REF#refs/tags/}"
+          if [[ "$ref" == bsl-sonar-scanner-cli_* ]]; then
+            # Версионированная сборка: bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]
+            # Разделитель '-' — в SONAR_SCANNER_VERSION может встречаться '_'
+            # (например 12.1.0.3233_8.0.1). ONEC_VERSION опционален:
+            # если не задан, build-скрипт использует прибитую молотком версию.
+            version_part="${ref#bsl-sonar-scanner-cli_}"
+            if [[ "$version_part" == *-* ]]; then
+              export SONAR_SCANNER_VERSION="${version_part%%-*}"
+              export ONEC_VERSION="${version_part#*-}"
+            else
+              export SONAR_SCANNER_VERSION="$version_part"
+            fi
+            echo "Версионированная сборка: сканер ${SONAR_SCANNER_VERSION}, onec-platform ${ONEC_VERSION:-<молоток>}"
           else
-            export SONAR_SCANNER_VERSION="$version_part"
+            # Релизная сборка: bsl-sonar-scanner-cli-v<N> → docker-тег v<N>,
+            # версии — дефолтные (молоток onec-platform + закреплённый сканер)
+            export RELEASE_TAG="${ref#bsl-sonar-scanner-cli-}"
+            echo "Релизная сборка: docker-тег ${RELEASE_TAG}, дефолтные версии"
           fi
-          echo "Собираем bsl-sonar-scanner-cli: сканер ${SONAR_SCANNER_VERSION}, onec-platform ${ONEC_VERSION:-<молоток>}"
           ./src/build-bsl-sonar-scanner-cli.sh
