@@ -1,0 +1,49 @@
+name: Build bsl-sonar-scanner-cli Docker Image
+
+on:
+  push:
+    tags:
+      - 'bsl-sonar-scanner-cli_*'   # версионированная сборка: bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]
+      - 'bsl-sonar-scanner-cli-v*'  # релизная сборка: bsl-sonar-scanner-cli-v<N> (дефолтные версии)
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # Нужны для fallback-сборки базового onec-platform (build-onec-platform.sh)
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build, test and push bsl-sonar-scanner-cli image
+        run: |
+          ref="${GITHUB_REF#refs/tags/}"
+          if [[ "$ref" == bsl-sonar-scanner-cli_* ]]; then
+            # Версионированная сборка: bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]
+            # Разделитель '-' — в SONAR_SCANNER_VERSION может встречаться '_'
+            # (например 12.1.0.3233_8.0.1). ONEC_VERSION опционален:
+            # если не задан, build-скрипт использует прибитую молотком версию.
+            version_part="${ref#bsl-sonar-scanner-cli_}"
+            if [[ "$version_part" == *-* ]]; then
+              export SONAR_SCANNER_VERSION="${version_part%%-*}"
+              export ONEC_VERSION="${version_part#*-}"
+            else
+              export SONAR_SCANNER_VERSION="$version_part"
+            fi
+            echo "Версионированная сборка: сканер ${SONAR_SCANNER_VERSION}, onec-platform ${ONEC_VERSION:-<молоток>}"
+          else
+            # Релизная сборка: bsl-sonar-scanner-cli-v<N> → docker-тег v<N>,
+            # версии — дефолтные (молоток onec-platform + закреплённый сканер)
+            export RELEASE_TAG="${ref#bsl-sonar-scanner-cli-}"
+            echo "Релизная сборка: docker-тег ${RELEASE_TAG}, дефолтные версии"
+          fi
+          ./src/build-bsl-sonar-scanner-cli.sh

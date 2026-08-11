@@ -21,6 +21,7 @@
 - [EDT vanessa-runner (edt-vrunner)](#edt-vanessa-runner-edt-vrunner)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
+- [bsl-sonar-scanner-cli](#bsl-sonar-scanner-cli)
 
 ## Как собрать образы
 
@@ -359,5 +360,38 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner2.sh
    - `vrunner_8.3.27.1644` — соберёт образ `vrunner` (vanessa-runner 3).
    - `vrunner2_8.3.27.1644` — соберёт образ `vrunner2` (vanessa-runner 2.6.1).
 2. Workflow извлечёт `ONEC_VERSION` из тега и запустит соответствующий скрипт сборки. При необходимости будет предварительно собран и (если разрешён) запущен push базового `onec-platform`.
+
+## bsl-sonar-scanner-cli
+
+Образ на базе [sonarsource/sonar-scanner-cli](https://hub.docker.com/r/sonarsource/sonar-scanner-cli) с добавленными файлами синтакс-помощника 1С (`shcntx_*.hbk`, `shlang_*.hbk`) из образа `onec-platform`. Файлы копируются по тем же путям, что и в исходном образе (`/opt/1cv8/x86_64/$ONEC_VERSION/`). Нужен для анализа BSL-кода в SonarQube (диагностика Typo и т.п.).
+
+- Версия `onec-platform` (источник hbk-файлов) **прибита молотком**: `8.3.27.2214` (последняя актуальная). Переопределяется через `ONEC_VERSION` при сборке — файлы нужны только из актуальной версии платформы, поэтому на каждый релиз платформы образ пересобирать не требуется.
+- Версия `sonar-scanner-cli` — по умолчанию `12.1.0.3233_8.0.1`, переопределяется через `SONAR_SCANNER_VERSION`.
+
+Примеры:
+
+```bash
+# локальная сборка без публикации (базовый onec-platform берётся локально или из реестра)
+PUSH_IMAGE=false ./src/build-bsl-sonar-scanner-cli.sh
+
+# с переопределением версии onec-platform и сканера
+PUSH_IMAGE=false ONEC_VERSION=8.3.27.1859 SONAR_SCANNER_VERSION=12.1.0.3233_8.0.1 ./src/build-bsl-sonar-scanner-cli.sh
+```
+
+Сборка через GitHub Actions по тегу. Два семейства тегов (различаются первым символом после имени — `_` или `-`):
+
+**Версионированная сборка** — `bsl-sonar-scanner-cli_<SONAR_SCANNER_VERSION>[-<ONEC_VERSION>]`, где `ONEC_VERSION` опционален (если не задан — берётся прибитая молотком версия). Разделитель `-`, т.к. в версии сканера встречается `_` (JRE-суффикс):
+
+```bash
+# сканер 12.1.0.3233_8.0.1, onec-platform = молоток (8.3.27.2214)
+git tag bsl-sonar-scanner-cli_12.1.0.3233_8.0.1
+
+# сканер + явная версия onec-platform
+git tag bsl-sonar-scanner-cli_12.1.0.3233_8.0.1-8.3.27.1859
+```
+
+**Релизная сборка** — `bsl-sonar-scanner-cli-v<N>` (например `bsl-sonar-scanner-cli-v1`): собирается с дефолтными версиями (молоток onec-platform + закреплённый сканер) и публикуется под docker-тегом `v<N>`.
+
+Тег Docker-образа повторяет git-тег: `bsl-sonar-scanner-cli:12.1.0.3233_8.0.1[-8.3.27.1859]` или `bsl-sonar-scanner-cli:v1` для релиза.
 
 [↑ Наверх](#onec-images)

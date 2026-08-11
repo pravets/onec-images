@@ -1,0 +1,36 @@
+name: CI bsl-sonar-scanner-cli (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/bsl-sonar-scanner-cli/**'
+      - 'src/build-bsl-sonar-scanner-cli.sh'
+      - 'tests/test-bsl-sonar-scanner-cli.sh'
+      - 'scripts/**'
+      - '.github/workflows/ci-bsl-sonar-scanner-cli.yml'
+
+jobs:
+  build-bsl-sonar-scanner-cli:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    env:
+      # Нужны для локальной сборки базового onec-platform (fallback build-скрипта),
+      # т.к. с DOCKER_REGISTRY_URL=local pull из реестра не выполняется.
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      DOCKER_REGISTRY_URL: 'local'
+      PUSH_IMAGE: 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build bsl-sonar-scanner-cli (no push)
+        run: |
+          # ONEC_VERSION не задаём — берётся дефолт из build-скрипта
+          # (версия onec-platform, прибитая молотком)
+          ./src/build-bsl-sonar-scanner-cli.sh
