@@ -65,13 +65,16 @@ elif [[ -n "${DOCKER_REGISTRY_URL:-}" && "${DOCKER_REGISTRY_URL}" != "local" ]];
         echo "Не удалось получить базовый образ из реестра: $local_prefixed" >&2
         echo "Выполняю локальную сборку базового образа onec-platform:${ONEC_VERSION}" >&2
         PUSH_IMAGE=${PUSH_IMAGE} ONEC_VERSION="$ONEC_VERSION" CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" "${SCRIPT_DIR}/build-onec-platform.sh"
-        ONEC_BASE_IMAGE="$local_unprefixed"
+        # build-onec-platform.sh тегирует образ как ${DOCKER_REGISTRY_URL}/onec-platform:${ONEC_VERSION}
+        ONEC_BASE_IMAGE="${registry_prefix}onec-platform:${ONEC_VERSION}"
     fi
 else
     echo "DOCKER_REGISTRY_URL пустой или равен 'local' — пропускаю pull, строю onec-platform локально" >&2
     echo "Выполняю локальную сборку базового образа onec-platform:${ONEC_VERSION}" >&2
     PUSH_IMAGE=${PUSH_IMAGE} ONEC_VERSION="$ONEC_VERSION" CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" "${SCRIPT_DIR}/build-onec-platform.sh"
-    ONEC_BASE_IMAGE="$local_unprefixed"
+    # build-onec-platform.sh тегирует образ как ${DOCKER_REGISTRY_URL}/onec-platform:${ONEC_VERSION}
+    # (при пустом DOCKER_REGISTRY_URL — без префикса, при 'local' — с префиксом local/)
+    ONEC_BASE_IMAGE="${registry_prefix}onec-platform:${ONEC_VERSION}"
 fi
 
 [[ -z "$ONEC_BASE_IMAGE" ]] && { log_failure "Не удалось определить базовый образ onec-platform"; exit 1; }
