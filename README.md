@@ -21,6 +21,7 @@
 - [EDT vanessa-runner (edt-vrunner)](#edt-vanessa-runner-edt-vrunner)
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
+- [bsl-sonar-scanner-cli](#bsl-sonar-scanner-cli)
 
 ## Как собрать образы
 
@@ -359,5 +360,24 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner2.sh
    - `vrunner_8.3.27.1644` — соберёт образ `vrunner` (vanessa-runner 3).
    - `vrunner2_8.3.27.1644` — соберёт образ `vrunner2` (vanessa-runner 2.6.1).
 2. Workflow извлечёт `ONEC_VERSION` из тега и запустит соответствующий скрипт сборки. При необходимости будет предварительно собран и (если разрешён) запущен push базового `onec-platform`.
+
+## bsl-sonar-scanner-cli
+
+Образ на базе [sonarsource/sonar-scanner-cli](https://hub.docker.com/r/sonarsource/sonar-scanner-cli) с добавленными файлами синтакс-помощника 1С (`shcntx_*.hbk`, `shlang_*.hbk`) из образа `onec-platform`. Файлы копируются по тем же путям, что и в исходном образе (`/opt/1cv8/x86_64/$ONEC_VERSION/`). Нужен для анализа BSL-кода в SonarQube (диагностика Typo и т.п.).
+
+- Версия `onec-platform` (источник hbk-файлов) **прибита молотком**: `8.3.27.2214` (последняя актуальная). Переопределяется через `ONEC_VERSION` при сборке — файлы нужны только из актуальной версии платформы, поэтому на каждый релиз платформы образ пересобирать не требуется.
+- Версия `sonar-scanner-cli` — по умолчанию `12.1.0.3233_8.0.1`, переопределяется через `SONAR_SCANNER_VERSION`.
+
+Примеры:
+
+```bash
+# локальная сборка без публикации (базовый onec-platform берётся локально или из реестра)
+PUSH_IMAGE=false ./src/build-bsl-sonar-scanner-cli.sh
+
+# с переопределением версии onec-platform и сканера
+PUSH_IMAGE=false ONEC_VERSION=8.3.27.1859 SONAR_SCANNER_VERSION=12.1.0.3233_8.0.1 ./src/build-bsl-sonar-scanner-cli.sh
+```
+
+Сборка через GitHub Actions по тегу: создайте тег вида `bsl-sonar-scanner-cli_ВерсияПлатформы`, например `bsl-sonar-scanner-cli_8.3.27.2214`. Workflow извлечёт `ONEC_VERSION` из тега и запустит сборку с публикацией в реестр.
 
 [↑ Наверх](#onec-images)
