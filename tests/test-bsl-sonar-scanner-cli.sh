@@ -14,8 +14,14 @@ source "${SCRIPT_DIR}/../tools/assert.sh"
 
 TEST_FAILED=0
 
-# Дефолт совпадает с build-скриптом (версия onec-platform прибита молотком)
-ONEC_VERSION=${ONEC_VERSION:-8.3.27.2214}
+# Дефолт совпадает с build-скриптом (версия onec-platform прибита молотком).
+# В тег образа onec-версия попадает только при явном задании ONEC_VERSION.
+ONEC_VERSION_EXPLICIT=false
+if [[ -n "${ONEC_VERSION:-}" ]]; then
+  ONEC_VERSION_EXPLICIT=true
+else
+  ONEC_VERSION=8.3.27.2214
+fi
 
 # Resolve image tag from env or defaults (matches build-bsl-sonar-scanner-cli.sh scheme)
 resolve_image_tag() {
@@ -27,7 +33,11 @@ resolve_image_tag() {
   if [[ -n "${DOCKER_REGISTRY_URL:-}" ]]; then
     prefix="${DOCKER_REGISTRY_URL}/"
   fi
-  echo "${prefix}bsl-sonar-scanner-cli:${ONEC_VERSION}${CI_SUFFIX:-}"
+  local onec_suffix=""
+  if [[ "$ONEC_VERSION_EXPLICIT" == "true" ]]; then
+    onec_suffix="-${ONEC_VERSION}"
+  fi
+  echo "${prefix}bsl-sonar-scanner-cli:${SONAR_SCANNER_VERSION:-12.1.0.3233_8.0.1}${onec_suffix}${CI_SUFFIX:-}"
 }
 
 test_hbk_files_present() {
