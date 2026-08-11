@@ -25,19 +25,32 @@ if [[ "${NO_CACHE:-}" = "true" ]] ; then
 fi
 
 # Версия onec-platform (источник hbk-файлов) прибита молотком —
-# переопределяется через ONEC_VERSION при сборке.
-ONEC_VERSION=${ONEC_VERSION:-8.3.27.2214}
+# переопределяется через ONEC_VERSION при сборке. В тег образа версия
+# onec-platform добавляется только если задана явно.
+ONEC_VERSION_EXPLICIT=false
+if [[ -n "${ONEC_VERSION:-}" ]]; then
+    ONEC_VERSION_EXPLICIT=true
+else
+    ONEC_VERSION=8.3.27.2214
+fi
 
 # Версия базового образа sonar-scanner-cli — переопределяется через
 # SONAR_SCANNER_VERSION при сборке.
 SONAR_SCANNER_VERSION=${SONAR_SCANNER_VERSION:-12.1.0.3233_8.0.1}
 
 # Формируем теги образов
+# Тег: bsl-sonar-scanner-cli:${SONAR_SCANNER_VERSION}[-${ONEC_VERSION}]
+# (версия onec-platform в теге — только при явном ONEC_VERSION; '-'
+#  выбран разделителем, т.к. в SONAR_SCANNER_VERSION встречается '_')
 registry_prefix=""
 if [[ -n "${DOCKER_REGISTRY_URL:-}" ]]; then
     registry_prefix="${DOCKER_REGISTRY_URL}/"
 fi
-IMAGE_TAG="${registry_prefix}bsl-sonar-scanner-cli:${ONEC_VERSION}${CI_SUFFIX:-}"
+ONEC_TAG_SUFFIX=""
+if [[ "$ONEC_VERSION_EXPLICIT" == "true" ]]; then
+    ONEC_TAG_SUFFIX="-${ONEC_VERSION}"
+fi
+IMAGE_TAG="${registry_prefix}bsl-sonar-scanner-cli:${SONAR_SCANNER_VERSION}${ONEC_TAG_SUFFIX}${CI_SUFFIX:-}"
 
 # Резолвим базовый образ onec-platform (источник hbk-файлов).
 # Предпочитаем локальный образ без префикса (onec-platform:${ONEC_VERSION}),
