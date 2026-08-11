@@ -12,6 +12,9 @@ jobs:
       DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
       DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # Нужны для fallback-сборки базового onec-platform (build-onec-platform.sh)
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
 
     steps:
       - name: Checkout repository
