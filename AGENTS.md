@@ -253,7 +253,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `vrunner_<VERSION>` | `build-vrunner.yml` | `vrunner` |
 | `vrunner2_<VERSION>` | `build-vrunner2.yml` | `vrunner2` |
 | `edt-vrunner_<EDT_VERSION>` | `build-edt-vrunner.yml` | `edt-vrunner` |
-| `bsl-sonar-scanner-cli_<VERSION>` | `build-bsl-sonar-scanner-cli.yml` | `bsl-sonar-scanner-cli` |
+| `bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]` | `build-bsl-sonar-scanner-cli.yml` | `bsl-sonar-scanner-cli` (ONEC опционален, разделитель `-`) |
 
 ### PR-проверки (build-only, без пуша)
 
