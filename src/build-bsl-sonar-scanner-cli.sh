@@ -52,6 +52,12 @@ if [[ "$ONEC_VERSION_EXPLICIT" == "true" ]]; then
 fi
 IMAGE_TAG="${registry_prefix}bsl-sonar-scanner-cli:${SONAR_SCANNER_VERSION}${ONEC_TAG_SUFFIX}${CI_SUFFIX:-}"
 
+# Релизный тег (workflow по тегу bsl-sonar-scanner-cli-v<N>):
+# bsl-sonar-scanner-cli:v<N> с дефолтными версиями, переопределяет IMAGE_TAG
+if [[ -n "${RELEASE_TAG:-}" ]]; then
+    IMAGE_TAG="${registry_prefix}bsl-sonar-scanner-cli:${RELEASE_TAG}${CI_SUFFIX:-}"
+fi
+
 # Резолвим базовый образ onec-platform (источник hbk-файлов).
 # Предпочитаем локальный образ без префикса (onec-platform:${ONEC_VERSION}),
 # затем с префиксом реестра; иначе pull из реестра; в крайнем случае —
