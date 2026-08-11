@@ -378,9 +378,7 @@ PUSH_IMAGE=false ./src/build-bsl-sonar-scanner-cli.sh
 PUSH_IMAGE=false ONEC_VERSION=8.3.27.1859 SONAR_SCANNER_VERSION=12.1.0.3233_8.0.1 ./src/build-bsl-sonar-scanner-cli.sh
 ```
 
-Сборка через GitHub Actions по тегу. Два семейства тегов (различаются первым символом после имени — `_` или `-`):
-
-**Версионированная сборка** — `bsl-sonar-scanner-cli_<SONAR_SCANNER_VERSION>[-<ONEC_VERSION>]`, где `ONEC_VERSION` опционален (если не задан — берётся прибитая молотком версия). Разделитель `-`, т.к. в версии сканера встречается `_` (JRE-суффикс):
+Сборка через GitHub Actions по тегу. Формат тега: `bsl-sonar-scanner-cli_<SONAR_SCANNER_VERSION>[-<ONEC_VERSION>]`, где `ONEC_VERSION` опционален (если не задан — берётся прибитая молотком версия). Разделитель `-`, т.к. в версии сканера встречается `_` (JRE-суффикс):
 
 ```bash
 # сканер 12.1.0.3233_8.0.1, onec-platform = молоток (8.3.27.2214)
@@ -390,8 +388,8 @@ git tag bsl-sonar-scanner-cli_12.1.0.3233_8.0.1
 git tag bsl-sonar-scanner-cli_12.1.0.3233_8.0.1-8.3.27.1859
 ```
 
-**Релизная сборка** — `bsl-sonar-scanner-cli-v<N>` (например `bsl-sonar-scanner-cli-v1`): собирается с дефолтными версиями (молоток onec-platform + закреплённый сканер) и публикуется под docker-тегом `v<N>`.
+Тег Docker-образа повторяет git-тег: `bsl-sonar-scanner-cli:12.1.0.3233_8.0.1[-8.3.27.1859]`.
 
-Тег Docker-образа повторяет git-тег: `bsl-sonar-scanner-cli:12.1.0.3233_8.0.1[-8.3.27.1859]` или `bsl-sonar-scanner-cli:v1` для релиза.
+Теги вида `bsl-sonar-scanner-cli-v<N>` — маркеры релиза, сборку **не** запускают.
 
 [↑ Наверх](#onec-images)
