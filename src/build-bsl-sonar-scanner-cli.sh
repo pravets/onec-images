@@ -94,29 +94,27 @@ DOCKER_BUILDKIT=1 docker build \
     -f "${SCRIPT_DIR}/bsl-sonar-scanner-cli/Dockerfile" \
     "${last_arg[@]}"
 
-# Тесты (если есть)
+# Тесты — обязательны: без исполняемого теста образ не публикуется.
 TEST_SCRIPT="${SCRIPT_DIR}/../tests/test-bsl-sonar-scanner-cli.sh"
-if [[ -x "$TEST_SCRIPT" ]]; then
-  if IMAGE_TAG="$IMAGE_TAG" ONEC_VERSION="$ONEC_VERSION" "$TEST_SCRIPT"; then
-      if [[ "$PUSH_IMAGE" == "true" ]]; then
-          docker push "$IMAGE_TAG"
-      else
-          echo "Skipping push (PUSH_IMAGE=false)"
-      fi
-      source "${SCRIPT_DIR}/../scripts/cleanup.sh"
-  else
-      log_failure "ERROR: Tests failed. Docker image will not be pushed."
-      source "${SCRIPT_DIR}/../scripts/cleanup.sh"
-      exit 1
-  fi
+if [[ ! -x "$TEST_SCRIPT" ]]; then
+    log_failure "Не найден исполняемый тест: $TEST_SCRIPT"
+    source "${SCRIPT_DIR}/../scripts/cleanup.sh"
+    exit 1
+fi
+
+# Запускаем тесты с CI=true, чтобы код завершения отражал провал тестов
+# (вне CI тестовый скрипт возвращает 0 даже при TEST_FAILED=1)
+if CI=true IMAGE_TAG="$IMAGE_TAG" ONEC_VERSION="$ONEC_VERSION" "$TEST_SCRIPT"; then
+    if [[ "$PUSH_IMAGE" == "true" ]]; then
+        docker push "$IMAGE_TAG"
+    else
+        echo "Skipping push (PUSH_IMAGE=false)"
+    fi
+    source "${SCRIPT_DIR}/../scripts/cleanup.sh"
 else
-  echo "No tests found for bsl-sonar-scanner-cli. Skipping tests."
-  if [[ "$PUSH_IMAGE" == "true" ]]; then
-      docker push "$IMAGE_TAG"
-  else
-      echo "Skipping push (PUSH_IMAGE=false)"
-  fi
-  source "${SCRIPT_DIR}/../scripts/cleanup.sh"
+    log_failure "ERROR: Tests failed. Docker image will not be pushed."
+    source "${SCRIPT_DIR}/../scripts/cleanup.sh"
+    exit 1
 fi
 
 exit 0
