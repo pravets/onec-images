@@ -265,6 +265,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `ci-edt-mcp-server.yml` | изменения в edt-mcp-server | EDT 2025.2.3 + MCP 1.24.5 |
 | `ci-edt-codepilot1c.yml` | изменения в edt-codepilot1c | EDT 2025.2.3 + CodePilot 0.1.7.20260301-0607 |
 | `ci-edt-vrunner.yml` | изменения в edt-vrunner | Матрица EDT 2024.2.6, 2025.1.5, 2025.2.6, 2026.1.2 |
+| `ci-bsl-sonar-scanner-cli.yml` | изменения в bsl-sonar-scanner-cli | Сборка hammer-версии (дефолт скрипта) без пуша; базовый onec-platform строится локально |
 
 В PR-workflow используется `DOCKER_REGISTRY_URL=local` и `PUSH_IMAGE=false`.
 
