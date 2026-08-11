@@ -40,7 +40,8 @@ onec-images/
 │   ├── executor/          # 1С:Исполнитель
 │   ├── onec-platform/     # 1С:Платформа (8.3.20–8.3.27)
 │   ├── vrunner/           # vanessa-runner 3.x (SNAPSHOT)
-│   └── vrunner2/          # vanessa-runner 2.6.1
+│   ├── vrunner2/          # vanessa-runner 2.6.1
+│   └── bsl-sonar-scanner-cli/  # sonar-scanner-cli + файлы синтакс-помощника 1С (shcntx_*.hbk, shlang_*.hbk) из onec-platform
 ├── tests/                 # Тесты для каждого образа
 ├── tools/assert.sh        # Библиотека ассертов на bash
 ├── .env.example           # Пример переменных окружения
@@ -100,6 +101,14 @@ onec-images/
 - `vrunner2` — vanessa-runner 2.6.1.
 - Требуют Mono, OneScript (OVM) и базовый образ `onec-platform`.
 
+### `bsl-sonar-scanner-cli`
+
+- Образ на базе `sonarsource/sonar-scanner-cli` с файлами синтакс-помощника 1С (`shcntx_*.hbk`, `shlang_*.hbk`), скопированными из `onec-platform` по тем же путям (`/opt/1cv8/x86_64/$ONEC_VERSION/`).
+- Используется для анализа BSL-кода в SonarQube (диагностика Typo и т.п.).
+- Версия `onec-platform` (источник hbk) **прибита молотком**: `8.3.27.2214` (последняя актуальная), переопределяется через `ONEC_VERSION`.
+- Версия сканера — по умолчанию `12.1.0.3233_8.0.1`, переопределяется через `SONAR_SCANNER_VERSION`.
+- В Dockerfile источник оформлен отдельной стадией `onec-base` (FROM с ARG). ВАЖНО: параметризованная стадия должна идти первой, иначе BuildKit падает с `circular dependency detected on stage`.
+
 ## Переменные окружения
 
 Создайте `.env` на основе `.env.example`:
@@ -126,6 +135,13 @@ cp .env.example .env
 | `ONEC_USERNAME` | Логин к сайту релизов 1С |
 | `ONEC_PASSWORD` | Пароль к сайту релизов 1С |
 | `ONEC_VERSION` | Версия платформы, например `8.3.27.1644` |
+
+Переменные для bsl-sonar-scanner-cli:
+
+| Переменная | Назначение |
+|------------|------------|
+| `ONEC_VERSION` | Версия onec-platform-источника hbk-файлов (дефолт прибит молотком: `8.3.27.2214`) |
+| `SONAR_SCANNER_VERSION` | Версия базового `sonarsource/sonar-scanner-cli` (дефолт `12.1.0.3233_8.0.1`) |
 
 Переменные для EDT:
 
@@ -172,6 +188,9 @@ EXECUTOR_VERSION=3.0.2.2 ./src/build-executor.sh
 # vanessa-runner
 ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 ONEC_VERSION=8.3.27.1644 ./src/build-vrunner2.sh
+
+# bsl-sonar-scanner-cli (версия onec-platform прибита молотком, переопределяется через ONEC_VERSION)
+PUSH_IMAGE=false ./src/build-bsl-sonar-scanner-cli.sh
 ```
 
 Для локальной проверки без публикации:
@@ -218,6 +237,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 - `test-edt-vrunner.sh` — проверяет запуск `vrunner`/`vrunner --help` и доступность `1cedtcli`.
 - `test-executor.sh` — проверяет вывод `--version`.
 - `test-vrunner.sh` / `test-vrunner2.sh` — проверяют help и создание базы через `init-dev --ibcmd`.
+- `test-bsl-sonar-scanner-cli.sh` — проверяет наличие hbk-файлов по путям onec-platform, размер синтакс-помощника и работу `sonar-scanner --version`.
 
 ## CI/CD (GitHub Actions)
 
@@ -233,6 +253,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `vrunner_<VERSION>` | `build-vrunner.yml` | `vrunner` |
 | `vrunner2_<VERSION>` | `build-vrunner2.yml` | `vrunner2` |
 | `edt-vrunner_<EDT_VERSION>` | `build-edt-vrunner.yml` | `edt-vrunner` |
+| `bsl-sonar-scanner-cli_<VERSION>` | `build-bsl-sonar-scanner-cli.yml` | `bsl-sonar-scanner-cli` |
 
 ### PR-проверки (build-only, без пуша)
 
