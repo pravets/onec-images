@@ -50,6 +50,7 @@ COPY --from=downloader /tmp/${downloads} /tmp/${downloads}
 WORKDIR /tmp/${downloads}
 
 ARG EDT_DISABLE_EDITING_VERSION=0.6.0.20260330-0921
+ARG EDT_EDITING_PLUGIN_REPOSITORY=https://pravets.github.io/edt-editing/update
 RUN chmod +x ./1ce-installer-cli \
   && ./1ce-installer-cli install all --ignore-hardware-checks --ignore-signature-warnings \
     && EDT_PATH="$(find /opt/1C/1CE -type f -name 1cedt -print -quit)" \
@@ -59,7 +60,7 @@ RUN chmod +x ./1ce-installer-cli \
     && echo "Found Java at: $JAVA_BIN" \
     && [ -n "$JAVA_BIN" ] || { echo "ERROR: Java not found in /opt/1C/1CE/components"; exit 1; } \
     && ln -sfn "$(dirname "$(dirname "$JAVA_BIN")")" "$(dirname "$EDT_PATH")"/jre \
-    && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository https://marmyshev.gitlab.io/edt-editing/update -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
+    && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -repository ${EDT_EDITING_PLUGIN_REPOSITORY} -installIU org.mard.dt.editing.feature.feature.group/${EDT_DISABLE_EDITING_VERSION} \
     && "$(dirname "$EDT_PATH")"/1cedt -clean -purgeHistory -application org.eclipse.equinox.p2.director -noSplash -uninstallIU com.e1c.edt.ai.feature.feature.group \
     && rm -rf "$(dirname "$EDT_PATH")"/features/com.e1c.edt.ai.feature_* \
     && rm -f "$(dirname "$EDT_PATH")"/plugins/com.e1c.edt.ai*.jar \
