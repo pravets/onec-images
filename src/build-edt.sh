@@ -44,6 +44,22 @@ fi
 
 DOCKERFILE_NAME="${MAJOR_VERSION}.Dockerfile"
 
+# Версия плагина edt-editing по умолчанию (ветки совместимости с EDT);
+# 2026.1.x требует ветку 0.6.0, 2026.2.0 и новее — 0.7.0
+if [[ -z "${EDT_DISABLE_EDITING_VERSION:-}" ]]; then
+    case "$edt_version" in
+        2023.*)                 EDT_DISABLE_EDITING_VERSION="0.5.0.20240203-0530" ;;
+        2024.*|2025.*|2026.1.*) EDT_DISABLE_EDITING_VERSION="0.6.0.20260330-0921" ;;
+        2026.*)                 EDT_DISABLE_EDITING_VERSION="0.7.0.20261014-1314" ;;
+        *)
+            echo "Ошибка: не удалось определить версию плагина edt-editing для $edt_version. Задайте EDT_DISABLE_EDITING_VERSION" >&2
+            exit 1
+            ;;
+    esac
+fi
+EDT_EDITING_PLUGIN_REPOSITORY="${EDT_EDITING_PLUGIN_REPOSITORY:-https://pravets.github.io/edt-editing/update}"
+echo "Плагин edt-editing: ${EDT_DISABLE_EDITING_VERSION} (репозиторий: ${EDT_EDITING_PLUGIN_REPOSITORY})"
+
 # Form the image tag; allow local tag without registry for CI builds
 registry_prefix=""
 if [[ -n "${DOCKER_REGISTRY_URL:-}" ]]; then
@@ -61,6 +77,8 @@ DOCKER_BUILDKIT=1 docker build \
     --secret id=onec_username,src=/tmp/onec_username \
     --secret id=onec_password,src=/tmp/onec_password \
     --build-arg EDT_VERSION="$EDT_VERSION" \
+    --build-arg EDT_DISABLE_EDITING_VERSION="$EDT_DISABLE_EDITING_VERSION" \
+    --build-arg EDT_EDITING_PLUGIN_REPOSITORY="$EDT_EDITING_PLUGIN_REPOSITORY" \
     -t "$IMAGE_TAG" \
     -f "${SCRIPT_DIR}/../src/edt/${DOCKERFILE_NAME}" \
     $last_arg
