@@ -62,7 +62,7 @@ onec-images/
 
 - Базовый образ 1С:EDT без `ENTRYPOINT` (для совместимости с GitLab CI).
 - Поддерживаются версии **2023, 2024, 2025, 2026**.
-- В образе устанавливается плагин запрета редактирования (`edt-editing`) из update-site.
+- В образе устанавливается плагин запрета редактирования (`edt-editing`) из update-site (по умолчанию `https://pravets.github.io/edt-editing/update`, параметр `EDT_EDITING_PLUGIN_REPOSITORY`). Версия плагина — `EDT_DISABLE_EDITING_VERSION`, по умолчанию по версии EDT: 2023.x → 0.5.0, 2024.x–2026.1.x → 0.6.0, 2026.2.0+ → 0.7.0.
 - В образах EDT 2025.1 и новее плагин **1C:Workmate** (`com.e1c.edt.ai.feature.feature.group`) удаляется на этапе сборки.
 - `EDT_JAVA_XMX=12g` по умолчанию.
 
@@ -150,6 +150,8 @@ cp .env.example .env
 | `EDT_VERSION` | Версия EDT, например `2025.2.3` |
 | `EDT_MCP_VERSION` | Версия плагина EDT-MCP |
 | `EDT_CODEPILOT_VERSION` | Версия плагина CodePilot1C |
+| `EDT_EDITING_PLUGIN_REPOSITORY` | Update-site плагина edt-editing (дефолт `https://pravets.github.io/edt-editing/update`) |
+| `EDT_DISABLE_EDITING_VERSION` | Версия плагина edt-editing; по умолчанию выбирается по версии EDT: 2023.x → 0.5.0, 2024.x–2026.1.x → 0.6.0, 2026.2.0+ → 0.7.0 |
 | `EDT_JAVA_XMX` | Размер кучи JVM (по умолчанию `12g`) |
 
 Переменные для Исполнителя:

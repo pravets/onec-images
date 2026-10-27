@@ -107,7 +107,7 @@
 - Полезно знать:
   - Переменная `NO_CACHE=true` отключит кэш сборки.
   - Переменная `DOCKER_SYSTEM_PRUNE=true` перед сборкой очистит ненужные слои/объекты Docker.
-  - Образ собирается с предустановленным [плагином запрета редактирования (Disable Editing Plugin)](https://gitlab.com/marmyshev/edt-editing). Плагин устанавливается из [update‑site плагина](https://marmyshev.gitlab.io/edt-editing/update) в процессе сборки.
+  - Образ собирается с предустановленным [плагином запрета редактирования (Disable Editing Plugin)](https://github.com/Pravets/edt-editing). Плагин устанавливается из [update‑site плагина](https://pravets.github.io/edt-editing/update) в процессе сборки. Репозиторий update-site переопределяется переменной `EDT_EDITING_PLUGIN_REPOSITORY`, версия плагина — `EDT_DISABLE_EDITING_VERSION` (по умолчанию выбирается по версии EDT: 2023.x → 0.5.0, 2024.x–2026.1.x → 0.6.0, 2026.2.0+ → 0.7.0).
   - В образах EDT 2025.1 и новее плагин **1C:Workmate** (`com.e1c.edt.ai.feature.feature.group`) удаляется на этапе сборки через Eclipse p2 director.
   - Базовый образ `edt` собирается БЕЗ `ENTRYPOINT` для корректной работы в GitLab CI. Запуск `1cedtcli` выполняется явно (в производных образах, таких как `edtcli`, задаётся `ENTRYPOINT`).
 

@@ -105,10 +105,26 @@ test_workmate_plugin_absent() {
   fi
 }
 
+test_editing_plugin_present() {
+  log_header "Test :: edt-editing plugin is installed"
+
+  local tag output
+  tag="$(resolve_image_tag)"
+  output=$(docker run --rm --entrypoint find "$tag" /opt/1C/1CE/components/1cedt/plugins/ -name 'org.mard.dt.editing*' 2>/dev/null)
+
+  if [ -n "$output" ]; then
+    log_success "edt-editing plugin is installed"
+  else
+    log_failure "edt-editing plugin artifacts not found"
+    TEST_FAILED=1
+  fi
+}
+
 # test calls
 test_1cedtcli_is_running_version
 test_1cedtcli_sh_is_running_version
 test_1cedt_version
 test_workmate_plugin_absent
+test_editing_plugin_present
 
 [[ -n "${CI:-}" ]] && exit "$TEST_FAILED" || exit 0
