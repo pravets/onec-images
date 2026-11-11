@@ -440,15 +440,14 @@ git tag cs_30.0.42
 
 В CI нужны секреты `ONEC_USERNAME` и `ONEC_PASSWORD` (они уже используются остальными образами). Фильтры при необходимости переопределяются build-аргументами `CS_YARD_APP_FILTER` и `CS_YARD_DISTR_FILTER`.
 
-
 ```bash
 # порядок важен: cs-base нужен остальным
-PUSH_IMAGE=false ./src/build-cs-base.sh
-PUSH_IMAGE=false ./src/build-cs-hazelcast.sh
-PUSH_IMAGE=false ./src/build-cs-elasticsearch.sh
-PUSH_IMAGE=false ./src/build-cs-server.sh
-PUSH_IMAGE=false ./src/build-cs-site.sh
-PUSH_IMAGE=false ./src/build-cs-web-chat.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-base.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-hazelcast.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-elasticsearch.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-server.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-site.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-web-chat.sh
 ```
 
 `cs-site` и `cs-web-chat` собираются из статики, которую установщик уже распаковал в образ `cs-base`, поэтому дистрибутив для них повторно не скачивается.
