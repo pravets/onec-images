@@ -22,6 +22,7 @@
 - [1С:Платформа (onec-platform)](#1сплатформа-onec-platform)
 - [vanessa-runner (vrunner)](#vanessa-runner-vrunner)
 - [bsl-sonar-scanner-cli](#bsl-sonar-scanner-cli)
+- [1С:Сервер взаимодействия (cs-*)](#1ссервер-взаимодействия-cs-)
 
 ## Как собрать образы
 
@@ -391,5 +392,85 @@ git tag bsl-sonar-scanner-cli_12.1.0.3233_8.0.1-8.3.27.1859
 Тег Docker-образа повторяет git-тег: `bsl-sonar-scanner-cli:12.1.0.3233_8.0.1[-8.3.27.1859]`.
 
 Теги вида `bsl-sonar-scanner-cli-v<N>` — маркеры релиза, сборку **не** запускают.
+
+[↑ Наверх](#onec-images)
+
+## 1С:Сервер взаимодействия (cs-*)
+
+Семейство образов для **1С:Сервера взаимодействия** (Collaboration server, CS 30.x). Каждый компонент можно взять **встроенным** (контейнер из этого репозитория) или **внешним** (адрес из переменных окружения) — образы при этом не меняются.
+
+### Состав
+
+| Образ | Назначение | Порты |
+|-------|------------|-------|
+| `cs-base` | Базовый слой: JRE 11, компоненты CS, утилита `ring`, пользователь `cs` | — |
+| `cs-server` | Сервер взаимодействия (WebSocket, административный REST, интеграция) | 8086, 8087, 8443, 8444 |
+| `cs-hazelcast` | Hazelcast — кластерная координация | 5701 |
+| `cs-elasticsearch` | Elasticsearch — полнотекстовый поиск | 9200, 9300 |
+| `cs-site` | Сайт внешних пользователей (статика + nginx) | 80 |
+| `cs-web-chat` | Web-chat (статика + nginx) | 80 |
+
+### Что можно сделать встроенным или внешним
+
+| Компонент | Встроенный вариант | Внешний вариант |
+|-----------|--------------------|-----------------|
+| PostgreSQL 15 | — (только внешняя) | `CS_DB_URL`, `CS_DB_USER`, `CS_DB_PASSWORD` |
+| Hazelcast | `cs-hazelcast` | `CS_HAZELCAST_ADDRESSES` |
+| Elasticsearch | `cs-elasticsearch` | `CS_ES_ADDRESSES` (порт **9300**) |
+| S3-хранилище | RustFS (`--profile s3`) | `CS_S3_ENDPOINT` и ключи |
+| Видеосвязь (Janus) | — (только внешняя) | `CS_MEDIA_SERVER_URL` |
+| TURN/STUN | — (только внешний coturn) | `CS_TURN_URL` и учётные данные |
+| Сайт внешних пользователей | `cs-site`, `cs-web-chat` | отключить профиль `site` |
+
+### Сборка
+
+Дистрибутив `1c_cs_<версия>_linux_x86_64.tar.gz` в репозитории не хранится: его скачивает [yard](https://github.com/yellow-hammer-studio/yard) в отдельной стадии `downloader` внутри Dockerfile — тот же загрузчик и тот же образ `sleemp/onec-installer-downloader`, что и для платформы 1С/EDT. yard не привязан к конкретным продуктам: он читает список приложений `releases.1c.ru/total` и фильтрует их по названию, поэтому для сервера взаимодействия используется `--app-filter "Сервер взаимодействия"` и `--distr-filter "Сервер взаимодействия (64-bit) Linux"`. Учётные данные передаются BuildKit-секретами (`ONEC_USERNAME`/`ONEC_PASSWORD`), а сам архив в слои образа не попадает.
+
+`CS_VERSION` обязательна, а версия в имени скачанного архива сверяется с ней:
+
+```bash
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-base.sh
+```
+
+Сборка через GitHub Actions — по тегу `cs_<версия>`:
+
+```bash
+git tag cs_30.0.42
+```
+
+В CI нужны секреты `ONEC_USERNAME` и `ONEC_PASSWORD` (они уже используются остальными образами). Фильтры при необходимости переопределяются build-аргументами `CS_YARD_APP_FILTER` и `CS_YARD_DISTR_FILTER`.
+
+
+```bash
+# порядок важен: cs-base нужен остальным
+PUSH_IMAGE=false ./src/build-cs-base.sh
+PUSH_IMAGE=false ./src/build-cs-hazelcast.sh
+PUSH_IMAGE=false ./src/build-cs-elasticsearch.sh
+PUSH_IMAGE=false ./src/build-cs-server.sh
+PUSH_IMAGE=false ./src/build-cs-site.sh
+PUSH_IMAGE=false ./src/build-cs-web-chat.sh
+```
+
+`cs-site` и `cs-web-chat` собираются из статики, которую установщик уже распаковал в образ `cs-base`, поэтому дистрибутив для них повторно не скачивается.
+
+### Запуск стека
+
+```bash
+cd compose/cs
+cp .env.example .env      # заполнить CS_DB_URL, пароли, адреса
+docker compose up -d
+docker compose --profile site --profile s3 up -d   # + сайт, web-chat и RustFS
+```
+
+Подробное руководство по эксплуатации — [compose/cs/README.md](compose/cs/README.md).
+
+### Особенности реализации
+
+- **systemd не используется.** Утилита `ring` умеет только создавать юниты systemd, поэтому конфигурация пишется через `ring` (как в руководстве 1С), а компонент запускается напрямую его лаунчером. В контейнере один процесс — один компонент.
+- **`gawk` обязателен**: shell-обёртка `ring` использует `awk`-функцию `gensub`, которой нет в `mawk`.
+- **Elasticsearch слушает 0.0.0.0** (по умолчанию компонент слушает только 127.0.0.1), данные и логи вынесены в `/var/cs`.
+- **Регистрация зависимостей** (СУБД, S3, Janus, TURN) выполняется сервисом `init` через административный REST и идемпотентна: `CS_BOOTSTRAP=once|always|never`.
+- **Пароль администратора** задаётся `CS_ADMIN_PASSWORD`; значение `admin` по умолчанию недопустимо в промышленной эксплуатации.
+- **Регистрация информационной базы** в сервере взаимодействия выполняется вручную внешней обработкой `CollaborationSystemRegister.epf` — это клиентская операция, в контейнерах она не автоматизируется (см. руководство, раздел 9.4).
 
 [↑ Наверх](#onec-images)
