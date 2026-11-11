@@ -150,6 +150,8 @@ services:
       server:
         condition: service_healthy
     environment:
+      # init — отдельный контейнер, поэтому админ-REST доступен только по имени сервиса
+      CS_ADMIN_HOST: server
       CS_ADMIN_USER: ${CS_ADMIN_USER:-admin}
       CS_ADMIN_PASSWORD: ${CS_ADMIN_PASSWORD:?задайте CS_ADMIN_PASSWORD в .env}
       CS_ADMIN_PORT: ${CS_ADMIN_PORT:-8087}
