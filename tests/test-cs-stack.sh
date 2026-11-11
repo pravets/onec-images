@@ -255,6 +255,32 @@ test_bootstrap() {
     log_failure "повторный bootstrap завершился с ошибкой"
     TEST_FAILED=1
   fi
+
+  # Так bootstrap запускает сервис init в compose: отдельный контейнер обращается
+  # к административному REST по имени контейнера, а не по своему loopback.
+  if out="$(docker run --rm --network "${NET}" \
+      --entrypoint /usr/local/bin/bootstrap-cs.sh \
+      -e "CS_ADMIN_HOST=${SRV}" \
+      -e "CS_ADMIN_PORT=8087" \
+      -e "CS_ADMIN_USER=admin" \
+      -e "CS_ADMIN_PASSWORD=${ADMIN_PASSWORD}" \
+      -e "CS_DB_URL=jdbc:postgresql://${PG}:5432/${DB_NAME}?currentSchema=public" \
+      -e "CS_DB_USER=${DB_USER}" \
+      -e "CS_DB_PASSWORD=${DB_PASSWORD}" \
+      -e "CS_BOOTSTRAP=always" \
+      -e "CS_BOOTSTRAP_STRICT=true" \
+      "${SERVER_IMAGE}" 2>&1)"; then
+    if assert_contain "${out}" "уже зарегистрировано" \
+        "отдельный контейнер должен видеть зависимости по сети"; then
+      log_success "bootstrap из отдельного контейнера работает"
+    else
+      TEST_FAILED=1
+    fi
+  else
+    log_failure "bootstrap из отдельного контейнера завершился с ошибкой:"
+    printf '%s\n' "${out}" | sed 's/^/    /' >&2
+    TEST_FAILED=1
+  fi
 }
 
 test_health() {
