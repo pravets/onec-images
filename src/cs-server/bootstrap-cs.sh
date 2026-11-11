@@ -12,11 +12,13 @@ set -euo pipefail
 # shellcheck source=/dev/null
 source /usr/local/lib/cs/lib-cs.sh
 
+CS_ADMIN_HOST="${CS_ADMIN_HOST:-127.0.0.1}"
 CS_ADMIN_PORT="${CS_ADMIN_PORT:-8087}"
 CS_ADMIN_USER="${CS_ADMIN_USER:-admin}"
 CS_ADMIN_PASSWORD="${CS_ADMIN_PASSWORD:-admin}"
 CS_BOOTSTRAP="${CS_BOOTSTRAP:-once}"
 CS_BOOTSTRAP_STRICT="${CS_BOOTSTRAP_STRICT:-false}"
+BOOTSTRAP_FAILED=0
 
 MARKER="${CS_ROOT}/cs_instance/.bootstrap-done"
 
@@ -40,7 +42,9 @@ case "${CS_BOOTSTRAP}" in
 esac
 
 # Уровень ошибок: строгий режим валит контейнер, мягкий — только предупреждает.
+# В мягком режиме маркер не выставляется, чтобы регистрация повторилась.
 on_error() {
+    BOOTSTRAP_FAILED=1
     if [ "${CS_BOOTSTRAP_STRICT}" = "true" ]; then
         die "$1"
     fi
@@ -65,8 +69,8 @@ register() {
     fi
 }
 
-log "ожидаю административный REST CS на 127.0.0.1:${CS_ADMIN_PORT}"
-if ! wait_for_http "http://127.0.0.1:${CS_ADMIN_PORT}/rs/health" "${CS_BOOTSTRAP_TIMEOUT:-300}"; then
+log "ожидаю административный REST CS на $(cs_admin_host):${CS_ADMIN_PORT}"
+if ! wait_for_http "$(cs_admin_base)/rs/health" "${CS_BOOTSTRAP_TIMEOUT:-300}"; then
     die "административный REST CS недоступен — регистрация невозможна"
 fi
 
@@ -77,7 +81,7 @@ if [ -n "${CS_DB_URL:-}" ]; then
     : "${CS_DB_USER:?CS_DB_USER обязателен при заданном CS_DB_URL}"
     : "${CS_DB_PASSWORD:?CS_DB_PASSWORD обязателен при заданном CS_DB_URL}"
     register /admin/bucket_server "${CS_DB_URL}" \
-        "{\"url\":\"${CS_DB_URL}\",\"username\":\"${CS_DB_USER}\",\"password\":\"${CS_DB_PASSWORD}\",\"enabled\":true}" \
+        "{\"url\":\"$(json_escape "${CS_DB_URL}")\",\"username\":\"$(json_escape "${CS_DB_USER}")\",\"password\":\"$(json_escape "${CS_DB_PASSWORD}")\",\"enabled\":true}" \
         "основная БД"
 else
     warn "CS_DB_URL не задан — основная БД не регистрируется"
@@ -95,7 +99,7 @@ if [ -n "${CS_S3_ENDPOINT:-}" ]; then
     s3_limit="${CS_S3_FILE_SIZE_LIMIT:-1073741824}"
     s3_days="${CS_S3_DAYS_TO_KEEP:-31}"
     register /admin/storage_server "${s3_bucket}" \
-        "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"${CS_S3_ENDPOINT}\",\"containerUrl\":\"${CS_S3_ENDPOINT}/${s3_bucket}\",\"containerName\":\"${s3_bucket}\",\"region\":\"${s3_region}\",\"accessKeyId\":\"${CS_S3_ACCESS_KEY}\",\"secretKey\":\"${CS_S3_SECRET_KEY}\",\"signatureVersion\":\"${s3_signature}\",\"uploadLimit\":${s3_limit},\"downloadLimit\":${s3_limit},\"fileSizeLimit\":${s3_limit},\"bytesToKeep\":0,\"daysToKeep\":${s3_days},\"pathStyleAccessEnabled\":true}" \
+        "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"$(json_escape "${CS_S3_ENDPOINT}")\",\"containerUrl\":\"$(json_escape "${CS_S3_ENDPOINT}/${s3_bucket}")\",\"containerName\":\"$(json_escape "${s3_bucket}")\",\"region\":\"$(json_escape "${s3_region}")\",\"accessKeyId\":\"$(json_escape "${CS_S3_ACCESS_KEY}")\",\"secretKey\":\"$(json_escape "${CS_S3_SECRET_KEY}")\",\"signatureVersion\":\"$(json_escape "${s3_signature}")\",\"uploadLimit\":${s3_limit},\"downloadLimit\":${s3_limit},\"fileSizeLimit\":${s3_limit},\"bytesToKeep\":0,\"daysToKeep\":${s3_days},\"pathStyleAccessEnabled\":true}" \
         "S3-хранилище (${CS_S3_ENDPOINT}/${s3_bucket})"
 else
     log "CS_S3_ENDPOINT не задан — S3-хранилище не регистрируется"
@@ -106,7 +110,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ -n "${CS_MEDIA_SERVER_URL:-}" ]; then
     register /admin/media_server "${CS_MEDIA_SERVER_URL}" \
-        "{\"url\":\"${CS_MEDIA_SERVER_URL}\",\"name\":\"${CS_MEDIA_SERVER_NAME:-Janus 1}\",\"confereeLimit\":${CS_MEDIA_CONFEREE_LIMIT:-1000},\"enabled\":true}" \
+        "{\"url\":\"$(json_escape "${CS_MEDIA_SERVER_URL}")\",\"name\":\"$(json_escape "${CS_MEDIA_SERVER_NAME:-Janus 1}")\",\"confereeLimit\":${CS_MEDIA_CONFEREE_LIMIT:-1000},\"enabled\":true}" \
         "медиасервер ${CS_MEDIA_SERVER_URL}"
 else
     log "CS_MEDIA_SERVER_URL не задан — видеосвязь не подключена"
@@ -117,7 +121,7 @@ fi
 # ---------------------------------------------------------------------------
 if [ -n "${CS_TURN_URL:-}" ]; then
     register /admin/bucket_server "${CS_TURN_URL}" \
-        "{\"url\":\"${CS_TURN_URL}\",\"username\":\"${CS_TURN_USER:-}\",\"password\":\"${CS_TURN_PASSWORD:-}\",\"enabled\":true}" \
+        "{\"url\":\"$(json_escape "${CS_TURN_URL}")\",\"username\":\"$(json_escape "${CS_TURN_USER:-}")\",\"password\":\"$(json_escape "${CS_TURN_PASSWORD:-}")\",\"enabled\":true}" \
         "TURN/STUN ${CS_TURN_URL}"
 else
     log "CS_TURN_URL не задан — TURN/STUN не регистрируется"
@@ -133,6 +137,11 @@ if health="$(cs_admin_get /rs/health 2>/dev/null)"; then
     fi
 else
     on_error "не удалось прочитать /rs/health"
+fi
+
+if [ "${BOOTSTRAP_FAILED}" -ne 0 ]; then
+    warn "регистрация завершена с ошибками — маркер не выставлен, повтор при следующем запуске"
+    exit 0
 fi
 
 mkdir -p "$(dirname "${MARKER}")"
