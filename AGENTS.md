@@ -197,6 +197,7 @@ cp .env.example .env
 `CS_DB_URL`/`CS_DB_USER`/`CS_DB_PASSWORD`, `CS_ADMIN_USER`/`CS_ADMIN_PASSWORD`/`CS_ADMIN_PORT`,
 `CS_WS_PORT`/`CS_WS_WSS`, `CS_HAZELCAST_*`, `CS_ES_*`, `CS_S3_*`, `CS_MEDIA_*`, `CS_TURN_*`,
 `CS_PUBLIC_URL`, `CS_PUBLIC_WS_URL`, `CS_VIDEO_ENABLED`, `CS_LOG_CONSOLE`/`CS_LOG_LEVEL`,
+`CS_ADMIN_HOST` (адрес админ-REST для `bootstrap-cs.sh`; `init` в compose использует имя сервиса `server`),
 `CS_BOOTSTRAP`/`CS_BOOTSTRAP_STRICT`.
 
 ## Как собирать образы локально
