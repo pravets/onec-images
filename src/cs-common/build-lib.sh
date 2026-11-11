@@ -111,12 +111,16 @@ cs_build() {
     fi
 
     local -a build_args=(
-        --pull
         --secret "id=onec_username,src=/tmp/onec_username"
         --secret "id=onec_password,src=/tmp/onec_password"
         --build-arg "CS_VERSION=${CS_VERSION}"
         --build-arg "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
     )
+    # --pull только для образов без локальной базы: иначе BuildKit пытается
+    # получить локальный cs-base (например, local/cs-base) из реестра.
+    if [ -z "${CS_BASE_IMAGE}" ]; then
+        build_args+=(--pull)
+    fi
     if [ -n "${CS_BASE_IMAGE}" ]; then
         build_args+=(--build-arg "CS_BASE_IMAGE=${CS_BASE_IMAGE}")
     fi
