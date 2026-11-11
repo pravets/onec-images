@@ -10,13 +10,14 @@
 
 Основные цели:
 
-- Поставка Docker-образов для платформы 1С, 1С:EDT, 1С:Исполнителя, vanessa-runner и MCP-серверов поверх EDT.
+- Поставка Docker-образов для платформы 1С, 1С:EDT, 1С:Исполнителя, 1С:Сервера взаимодействия, vanessa-runner и MCP-серверов поверх EDT.
 - Автоматическая сборка и публикация по git-тегам.
 - Минимальное, но обязательное тестирование каждого собранного образа перед пушем.
 
 ## Технологический стек
 
 - **Docker + BuildKit** — многоэтапные сборки, передача секретов через `--mount=type=secret`.
+- **BuildKit named contexts** — не используются: дистрибутив CS скачивается отдельной стадией `downloader` через yard и монтируется в `RUN` (`--mount=type=bind,from=downloader`), поэтому в слои образа не попадает.
 - **Bash** — язык всех скриптов сборки, тестов и утилит.
 - **Ubuntu** — базовый образ для платформы 1С, EDT (2025–2026), Исполнителя.
 - **eclipse-temurin:17** — базовый образ для EDT 2023–2024.
@@ -33,6 +34,13 @@ onec-images/
 ├── scripts/               # Вспомогательные bash-скрипты
 ├── src/                   # Dockerfile и скрипты сборки образов
 │   ├── build-*.sh         # Точки входа для сборки каждого образа
+│   ├── cs-common/         # Общие скрипты и build-логика образов cs-*
+│   ├── cs-base/           # Базовый слой CS: JRE 11, ring, компоненты
+│   ├── cs-server/         # 1С:Сервер взаимодействия
+│   ├── cs-hazelcast/      # Hazelcast для CS
+│   ├── cs-elasticsearch/  # Elasticsearch для CS
+│   ├── cs-site/           # Сайт внешних пользователей
+│   ├── cs-web-chat/       # Web-chat
 │   ├── edt/               # Dockerfile базовых образов EDT (2023, 2024, 2025, 2026)
 │   ├── edtcli/            # Образ-обёртка с ENTRYPOINT=1cedtcli
 │   ├── edt-mcp-server/    # EDT + MCP-сервер (EDT-MCP)
@@ -43,6 +51,7 @@ onec-images/
 │   ├── vrunner2/          # vanessa-runner 2.6.1
 │   └── bsl-sonar-scanner-cli/  # sonar-scanner-cli + файлы синтакс-помощника 1С (shcntx_*.hbk, shlang_*.hbk) из onec-platform
 ├── tests/                 # Тесты для каждого образа
+├── compose/cs/            # docker compose стек 1С:Сервера взаимодействия
 ├── tools/assert.sh        # Библиотека ассертов на bash
 ├── .env.example           # Пример переменных окружения
 └── README.md              # Пользовательская документация (русский язык)
@@ -57,6 +66,20 @@ onec-images/
 - Dockerfile выбирается по первым трём компонентам версии: `8.3.22.x` → `src/onec-platform/8.3.22.Dockerfile`.
 - Ubuntu 20.04 для 8.3.20–8.3.21, Ubuntu 24.04 для 8.3.22–8.3.27.
 - В образе пользователь `usr1cv8:grp1cv8` (uid/gid 999), `/opt/1cv8/current` добавлен в `PATH`.
+
+### `cs-base`, `cs-server`, `cs-hazelcast`, `cs-elasticsearch`, `cs-site`, `cs-web-chat`
+
+- Семейство образов **1С:Сервера взаимодействия** (Collaboration server, версия 30.x; текущая — `30.0.42`).
+- `cs-base` — Ubuntu 24.04 + `openjdk-11-jre-headless` + полный продукт, установленный штатным `1ce-installer-cli`. Компоненты лежат в `/opt/1C/1CE/components/`, утилита `ring` доступна как `/usr/local/bin/ring`. Пользователь `cs` (uid/gid 999), экземпляры — в `/var/cs`.
+- **`gawk` обязателен**: shell-обёртка `ring` использует `awk`-функцию `gensub`, которой нет в `mawk`.
+- `/usr/local/bin/ring` — **обёртка, а не символическая ссылка**: скрипт ring вычисляет путь к своим модулям как `dirname "$0"`, через ссылку теряет `lib/boot`.
+- **systemd не используется.** `ring … service create` умеет только systemd-юниты, поэтому конфигурация пишется командами `ring` (`instance create`, `set-params`, `jdbc pools`, `websocket`, `maintenance`, `elasticsearch`, `hazelcast`, `site`), а компонент запускается напрямую его лаунчером: `<component>/bin/launcher start --instance <каталог экземпляра>`. Один контейнер — один компонент.
+- Экземпляр создаётся в `prepare.d/*.sh` (от root, т.к. `ring` пишет в `/etc/1C/1CE`), затем процесс запускается от пользователя `cs` через `gosu`; `tini` — PID 1.
+- Имена экземпляров: `cs`, `hazelcast`, `elasticsearch`; каталоги — `/var/cs/cs_instance`, `/var/cs/hazelcast_instance`, `/var/cs/elasticsearch_instance`.
+- Elasticsearch по умолчанию слушает только `127.0.0.1` — в `prepare.sh` добавляется `network.host: 0.0.0.0`, а также `path.data`/`path.logs` и `bootstrap.system_call_filter`.
+- `cs-site` и `cs-web-chat` — статические SPA из компонентов `1c-cs-site` / `1c-cs-web-chat`; собираются на `nginx:alpine` без Java. Статика копируется из уже установленного `cs-base` (установщик распаковывает `.car` в каталог компонента), поэтому дистрибутив для них повторно не скачивается; `config.json` формируется при старте из `CS_PUBLIC_WS_URL`.
+- Регистрация зависимостей (СУБД, S3, Janus, TURN) — `bootstrap-cs.sh` через административный REST, идемпотентно (`CS_BOOTSTRAP=once|always|never`), выполняется сервисом `init` в compose.
+- PostgreSQL, Janus и TURN/STUN — **только внешние**.
 
 ### `edt`
 
@@ -161,6 +184,22 @@ cp .env.example .env
 | `EXECUTOR_VERSION` | Версия 1С:Исполнителя |
 | `DEV1C_EXECUTOR_API_KEY` | API-ключ с `developer.1c.ru` |
 
+Переменные для 1С:Сервера взаимодействия (сборка):
+
+| Переменная | Назначение |
+|------------|------------|
+| `CS_VERSION` | Версия CS, например `30.0.42` (**обязательна**) |
+| `CS_YARD_APP_FILTER` / `CS_YARD_DISTR_FILTER` | Переопределение фильтров yard (build-args); по умолчанию `Сервер взаимодействия` / `Сервер взаимодействия \(64-bit\) Linux` |
+
+Дистрибутив CS скачивается через **yard** в отдельной стадии `downloader` внутри `src/cs-base/Dockerfile` — из того же образа `sleemp/onec-installer-downloader`, что и платформа/EDT; нужны `ONEC_USERNAME`/`ONEC_PASSWORD` (BuildKit-секреты `onec_username`/`onec_password`). yard не привязан к продуктам: он читает список приложений `releases.1c.ru/total` и фильтрует по названию приложения и заголовку ссылки на дистрибутив; `--download-only` обязателен, поэтому установщик получает архив, а не распакованное дерево.
+
+Переменные CS, читаемые образами (полный список — `compose/cs/.env.example`):
+`CS_DB_URL`/`CS_DB_USER`/`CS_DB_PASSWORD`, `CS_ADMIN_USER`/`CS_ADMIN_PASSWORD`/`CS_ADMIN_PORT`,
+`CS_WS_PORT`/`CS_WS_WSS`, `CS_HAZELCAST_*`, `CS_ES_*`, `CS_S3_*`, `CS_MEDIA_*`, `CS_TURN_*`,
+`CS_PUBLIC_URL`, `CS_PUBLIC_WS_URL`, `CS_VIDEO_ENABLED`, `CS_LOG_CONSOLE`/`CS_LOG_LEVEL`,
+`CS_ADMIN_HOST` (адрес админ-REST для `bootstrap-cs.sh`; `init` в compose использует имя сервиса `server`),
+`CS_BOOTSTRAP`/`CS_BOOTSTRAP_STRICT`.
+
 ## Как собирать образы локально
 
 Сборка возможна только на Linux.
@@ -193,6 +232,15 @@ ONEC_VERSION=8.3.27.1644 ./src/build-vrunner2.sh
 
 # bsl-sonar-scanner-cli (версия onec-platform прибита молотком, переопределяется через ONEC_VERSION)
 PUSH_IMAGE=false ./src/build-bsl-sonar-scanner-cli.sh
+
+# 1С:Сервер взаимодействия (CS_VERSION обязательна, дистрибутив скачивает yard)
+# Порядок важен: cs-base — база для cs-server / cs-hazelcast / cs-elasticsearch / cs-site / cs-web-chat
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-base.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-hazelcast.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-elasticsearch.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-server.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-site.sh
+CS_VERSION=30.0.42 PUSH_IMAGE=false ./src/build-cs-web-chat.sh
 ```
 
 Для локальной проверки без публикации:
@@ -240,6 +288,11 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 - `test-executor.sh` — проверяет вывод `--version`.
 - `test-vrunner.sh` / `test-vrunner2.sh` — проверяют help и создание базы через `init-dev --ibcmd`.
 - `test-bsl-sonar-scanner-cli.sh` — проверяет наличие hbk-файлов по путям onec-platform, размер синтакс-помощника и работу `sonar-scanner --version`.
+- `test-cs-base.sh` — JRE 11, `ring --version`, `gawk`, все компоненты CS, лаунчеры, пользователь `cs`.
+- `test-cs-hazelcast.sh` / `test-cs-elasticsearch.sh` — компонент стартует и слушает порт (5701 / 9200), конфигурация экземпляра корректна.
+- `test-cs-server.sh` — конфигурация CS формируется из переменных окружения (JDBC, WebSocket, админ-REST, ES, Hazelcast, video, логи).
+- `test-cs-site.sh` / `test-cs-web-chat.sh` — статика отдаётся, `config.json` собирается из `CS_PUBLIC_WS_URL`.
+- `test-cs-stack.sh` — **сквозной**: поднимает PostgreSQL 15, Hazelcast, Elasticsearch и CS в одной docker-сети, выполняет bootstrap и проверяет `/rs/health` (`mainDbOk`, Hazelcast, `elasticsearchOk`) и регистрацию БД. Дополнительно валидирует `compose/cs/compose.yaml`.
 
 ## CI/CD (GitHub Actions)
 
@@ -256,6 +309,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `vrunner2_<VERSION>` | `build-vrunner2.yml` | `vrunner2` |
 | `edt-vrunner_<EDT_VERSION>` | `build-edt-vrunner.yml` | `edt-vrunner` |
 | `bsl-sonar-scanner-cli_<SONAR>[-<ONEC>]` | `build-bsl-sonar-scanner-cli.yml` | `bsl-sonar-scanner-cli` (ONEC опционален, разделитель `-`). Теги `bsl-sonar-scanner-cli-v<N>` — маркеры релиза, сборку не запускают |
+| `cs_<VERSION>` | `build-cs.yml` | `cs-base`, `cs-hazelcast`, `cs-elasticsearch`, `cs-server`, `cs-site`, `cs-web-chat` + сквозной тест стека |
 
 ### PR-проверки (build-only, без пуша)
 
@@ -268,6 +322,7 @@ PUSH_IMAGE=false ONEC_VERSION=8.3.27.1644 ./src/build-vrunner.sh
 | `ci-edt-codepilot1c.yml` | изменения в edt-codepilot1c | EDT 2025.2.3 + CodePilot 0.1.7.20260301-0607 |
 | `ci-edt-vrunner.yml` | изменения в edt-vrunner | Матрица EDT 2024.2.6, 2025.1.5, 2025.2.6, 2026.1.2 |
 | `ci-bsl-sonar-scanner-cli.yml` | изменения в bsl-sonar-scanner-cli | Сборка hammer-версии (дефолт скрипта) без пуша; базовый onec-platform строится локально |
+| `ci-cs.yml` | изменения в `src/cs-*/**`, `src/build-cs-*.sh`, `tests/test-cs-*.sh`, `compose/cs/**` | Сборка всех образов CS без пуша + сквозной тест стека. Дистрибутив скачивается через yard (`ONEC_USERNAME`/`ONEC_PASSWORD`) |
 
 В PR-workflow используется `DOCKER_REGISTRY_URL=local` и `PUSH_IMAGE=false`.
 

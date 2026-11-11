@@ -1,0 +1,52 @@
+name: CI CS images (build-only on PR)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/cs-*/**'
+      - 'src/build-cs-*.sh'
+      - 'src/cs-common/**'
+      - 'tests/test-cs-*.sh'
+      - 'compose/cs/**'
+      - 'scripts/**'
+      - '.github/workflows/ci-cs.yml'
+
+jobs:
+  build-cs:
+    if: ${{ !github.event.pull_request.head.repo.fork }}
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: 'local'
+      PUSH_IMAGE: 'false'
+      # Нужны для скачивания дистрибутива CS через yard (стадия downloader)
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Дистрибутив CS в репозитории не хранится: его скачивает стадия downloader
+      # внутри Dockerfile тем же yard, что и для платформы/EDT.
+      - name: Resolve CS version
+        env:
+          CS_VERSION_DEFAULT: ${{ vars.CS_VERSION }}
+        run: |
+          set -euo pipefail
+          echo "CS_VERSION=${CS_VERSION_DEFAULT:-30.0.42}" >> "${GITHUB_ENV}"
+
+      - name: Build CS images (no push)
+        run: |
+          set -euo pipefail
+          ./src/build-cs-base.sh
+          ./src/build-cs-hazelcast.sh
+          ./src/build-cs-elasticsearch.sh
+          ./src/build-cs-server.sh
+          ./src/build-cs-site.sh
+          ./src/build-cs-web-chat.sh
+
+      - name: Stack smoke test
+        run: ./tests/test-cs-stack.sh

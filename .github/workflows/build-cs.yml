@@ -1,0 +1,42 @@
+name: Build CS images
+
+on:
+  push:
+    tags:
+      - 'cs_*'   # например cs_30.0.42 — собрать и опубликовать все образы семейства cs-*
+
+jobs:
+  build:
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY_URL: ${{ secrets.DOCKER_REGISTRY_URL }}
+      DOCKER_LOGIN: ${{ secrets.DOCKER_LOGIN }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      # Нужны для скачивания дистрибутива CS через yard (стадия downloader)
+      ONEC_USERNAME: ${{ secrets.ONEC_USERNAME }}
+      ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
+      # Версия CS: из тега cs_<версия>
+      CS_VERSION: ${{ github.ref_name }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Resolve CS version
+        run: echo "CS_VERSION=${CS_VERSION#cs_}" >> "${GITHUB_ENV}"
+
+      - name: Build, test and push CS images
+        run: |
+          set -euo pipefail
+          ./src/build-cs-base.sh
+          ./src/build-cs-hazelcast.sh
+          ./src/build-cs-elasticsearch.sh
+          ./src/build-cs-server.sh
+          ./src/build-cs-site.sh
+          ./src/build-cs-web-chat.sh
+
+      - name: Stack smoke test
+        run: ./tests/test-cs-stack.sh
