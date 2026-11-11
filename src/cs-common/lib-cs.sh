@@ -119,10 +119,18 @@ wait_for_http() {
 # JSON / HTTP для админ-REST CS
 # ---------------------------------------------------------------------------
 
+# cs_admin_host — адрес административного REST. В отдельном контейнере (сервис
+# init в compose) это имя сервиса, в остальных случаях — собственный loopback.
+cs_admin_host() { printf '%s\n' "${CS_ADMIN_HOST:-127.0.0.1}"; }
+
+cs_admin_base() {
+    printf 'http://%s:%s\n' "$(cs_admin_host)" "${CS_ADMIN_PORT:-8087}"
+}
+
 # cs_admin_post <path> <json>
 cs_admin_post() {
     local path="$1" payload="$2"
-    local base="http://127.0.0.1:${CS_ADMIN_PORT:-8087}"
+    local base; base="$(cs_admin_base)"
     curl -Ssf -m 30 -X POST \
         -H 'Content-Type: application/json' \
         -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:-admin}" \
@@ -133,7 +141,7 @@ cs_admin_post() {
 # cs_admin_get <path>
 cs_admin_get() {
     local path="$1"
-    local base="http://127.0.0.1:${CS_ADMIN_PORT:-8087}"
+    local base; base="$(cs_admin_base)"
     curl -Ssf -m 30 \
         -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:-admin}" \
         "${base}${path}"
@@ -142,4 +150,15 @@ cs_admin_get() {
 # json_has_value <json> <needle> — есть ли подстрока (для идемпотентных проверок).
 json_has_value() {
     printf '%s' "$1" | grep -qF -- "$2"
+}
+
+# json_escape <value> — экранирует строку для подстановки в JSON-литерал.
+json_escape() {
+    local value="$1"
+    value="${value//\\/\\\\}"
+    value="${value//\"/\\\"}"
+    value="${value//$'\n'/\\n}"
+    value="${value//$'\r'/\\r}"
+    value="${value//$'\t'/\\t}"
+    printf '%s' "${value}"
 }
