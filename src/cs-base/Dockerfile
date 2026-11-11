@@ -24,13 +24,14 @@ RUN : "${CS_VERSION:?CS_VERSION argument is required}"
 ARG CS_YARD_APP_FILTER="Сервер взаимодействия"
 ARG CS_YARD_DISTR_FILTER="Сервер взаимодействия \(64-bit\) Linux"
 
+# Точки в версии заменяются на [.]: фильтр-регулярка не зависит от экранирования.
 RUN --mount=type=secret,id=onec_username \
     --mount=type=secret,id=onec_password \
     export YARD_RELEASES_USER=$(cat /run/secrets/onec_username) && \
     export YARD_RELEASES_PWD=$(cat /run/secrets/onec_password) && \
     yard releases get \
       --app-filter "${CS_YARD_APP_FILTER}" \
-      --version-filter "$(printf '%s' "${CS_VERSION}" | sed 's/\./\\./g')" \
+      --version-filter "$(printf '%s' "${CS_VERSION}" | sed 's/\./[.]/g')" \
       --distr-filter "${CS_YARD_DISTR_FILTER}" \
       --path /tmp/downloads \
       --download-only \
