@@ -43,7 +43,9 @@ start_container() {
 
   local waited=0
   while [ "${waited}" -lt 120 ]; do
-    if docker exec "${CONTAINER}" test -f "${CONFIG_DIR}/jdbc.yml" >/dev/null 2>&1; then
+    # Маркер ставится точкой входа после всех prepare-скриптов: читать конфигурацию
+    # раньше нельзя — jdbc.yml появляется ещё до конца подготовки.
+    if docker exec "${CONTAINER}" test -f "/var/cs/.prepared" >/dev/null 2>&1; then
       log_success "конфигурация подготовлена за ${waited}с"
       return 0
     fi
@@ -98,7 +100,7 @@ check_configuration() {
 
 test_start_container() { start_container; }
 test_check_configuration() {
-  docker exec "${CONTAINER}" test -f "${CONFIG_DIR}/jdbc.yml" >/dev/null 2>&1 || {
+  docker exec "${CONTAINER}" test -f /var/cs/.prepared >/dev/null 2>&1 || {
     log_failure "проверка конфигурации пропущена: конфигурация не готова"
     TEST_FAILED=1
     return 1
