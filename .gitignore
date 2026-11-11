@@ -2,4 +2,5 @@
 dev1c_executor_api_key.txt
 .vscode/
 .build/
+.acl-recovery/
 .github/prompts/
