@@ -15,11 +15,18 @@ if [ "$(id -u)" = "0" ]; then
     mkdir -p "${CS_ROOT}"
     chown "${CS_USER}:${CS_USER}" "${CS_ROOT}"
 
+    # Маркер готовности: снимается до подготовки и ставится после неё, чтобы
+    # тесты и healthcheck не читали ещё не дописанную конфигурацию.
+    rm -f "${CS_ROOT}/.prepared"
+
     for prepare in /usr/local/lib/cs/prepare.d/*.sh; do
         [ -e "${prepare}" ] || continue
         log "подготовка: $(basename "${prepare}")"
         "${prepare}"
     done
+
+    touch "${CS_ROOT}/.prepared"
+    chown "${CS_USER}:${CS_USER}" "${CS_ROOT}/.prepared"
 
     exec gosu "${CS_USER}" "$@"
 fi
