@@ -10,7 +10,12 @@ on:
       - 'tests/test-cs-*.sh'
       - 'compose/cs/**'
       - 'scripts/**'
+      - 'tools/assert.sh'
+      - '.dockerignore'
       - '.github/workflows/ci-cs.yml'
+
+permissions:
+  contents: read
 
 jobs:
   build-cs:
