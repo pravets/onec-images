@@ -1,4 +1,6 @@
 #!/bin/bash
+set -eo pipefail
+
 # Общая логика build-скриптов семейства cs-*.
 #
 # Подключается из src/build-cs-*.sh, которые задают:
@@ -29,8 +31,9 @@ _cs_require_version() {
 # локальный без префикса -> локальный с префиксом -> pull из реестра -> локальная сборка.
 _cs_resolve_base() {
     local root="$1" prefix="$2"
-    local local_plain="cs-base:${CS_VERSION}"
-    local local_prefixed="${prefix}cs-base:${CS_VERSION}"
+    local version_tag="${CS_VERSION}${CI_SUFFIX:-}"
+    local local_plain="cs-base:${version_tag}"
+    local local_prefixed="${prefix}cs-base:${version_tag}"
 
     if docker image inspect "${local_plain}" > /dev/null 2>&1; then
         _cs_log "базовый образ найден локально: ${local_plain}"
@@ -55,11 +58,11 @@ _cs_resolve_base() {
     fi
 
     if [ -z "${CS_BASE_IMAGE}" ]; then
-        _cs_log "собираю базовый образ cs-base:${CS_VERSION}"
+        _cs_log "собираю базовый образ cs-base:${version_tag}"
         PUSH_IMAGE="${PUSH_IMAGE}" CS_VERSION="${CS_VERSION}" \
             CI_SUFFIX="${CI_SUFFIX:-}" DOCKER_REGISTRY_URL="${DOCKER_REGISTRY_URL:-}" \
             "${root}/src/build-cs-base.sh"
-        CS_BASE_IMAGE="${prefix}cs-base:${CS_VERSION}"
+        CS_BASE_IMAGE="${prefix}cs-base:${version_tag}"
     fi
 }
 
@@ -82,10 +85,6 @@ cs_build() {
     source "${root}/tools/assert.sh"
 
     _cs_require_version
-
-    # Учётные данные сайта релизов нужны стадии downloader (yard).
-    # shellcheck source=/dev/null
-    source "${root}/scripts/prepare_onec_credentials.sh"
 
     PUSH_IMAGE="${PUSH_IMAGE:-true}"
 
@@ -110,6 +109,12 @@ cs_build() {
         source "${root}/scripts/docker_login.sh"
     fi
 
+    # Учётные данные сайта релизов нужны стадии downloader (yard). Готовим их
+    # после разрешения базового образа: вложенная сборка cs-base вызывает
+    # cleanup.sh и удаляет временные секреты.
+    # shellcheck source=/dev/null
+    source "${root}/scripts/prepare_onec_credentials.sh"
+
     local -a build_args=(
         --secret "id=onec_username,src=/tmp/onec_username"
         --secret "id=onec_password,src=/tmp/onec_password"
@@ -133,17 +138,22 @@ cs_build() {
         build_args+=(--build-arg "CS_YARD_DISTR_FILTER=${CS_YARD_DISTR_FILTER}")
     fi
 
-    local -a context_arg=(.)
+    local -a context_arg=("${root}")
     if [ "${NO_CACHE:-}" = "true" ]; then
-        context_arg=(--no-cache .)
+        context_arg=(--no-cache "${root}")
     fi
 
     _cs_log "сборка ${image_tag}"
-    DOCKER_BUILDKIT=1 docker build \
+    if ! DOCKER_BUILDKIT=1 docker build \
         "${build_args[@]}" \
         -t "${image_tag}" \
         -f "${root}/${CS_DOCKERFILE}" \
-        "${context_arg[@]}"
+        "${context_arg[@]}"; then
+        log_failure "ERROR: сборка ${image_tag} не удалась"
+        # shellcheck source=/dev/null
+        source "${root}/scripts/cleanup.sh"
+        exit 1
+    fi
 
     local test_path="${root}/${CS_TEST}"
     if [ ! -x "${test_path}" ]; then
