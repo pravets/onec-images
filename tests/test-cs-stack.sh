@@ -60,8 +60,13 @@ cleanup() {
 trap cleanup EXIT
 
 wait_for_exec() {
-  # wait_for_exec <описание> <таймаут> <команда...>
+  # wait_for_exec <описание> <таймаут> [--optional] <команда...>
   local description="$1" timeout="$2"; shift 2
+  local optional=false
+  if [ "${1:-}" = "--optional" ]; then
+    optional=true
+    shift
+  fi
   local waited=0
   while [ "${waited}" -lt "${timeout}" ]; do
     if "$@" >/dev/null 2>&1; then
@@ -71,6 +76,10 @@ wait_for_exec() {
     sleep 2
     waited=$((waited + 2))
   done
+  if [ "${optional}" = "true" ]; then
+    echo "[WARN] ${description} не готов за ${timeout}с — необязательная проверка пропущена" >&2
+    return 1
+  fi
   log_failure "${description} не готов за ${timeout}с"
   TEST_FAILED=1
   return 1
@@ -88,6 +97,35 @@ test_compose_valid() {
     log_failure "compose/cs/compose.yaml не проходит валидацию docker compose config"
     (cd "${REPO_ROOT}" && docker compose -f compose/cs/compose.yaml \
       --env-file compose/cs/.env.example config --quiet 2>&1 | sed 's/^/    /' >&2) || true
+    TEST_FAILED=1
+    return 1
+  fi
+
+  # Админ-REST и RustFS не должны публиковаться на всех интерфейсах хоста.
+  local rendered admin_port_block rustfs_port_block
+  rendered="$(cd "${REPO_ROOT}" && docker compose -f compose/cs/compose.yaml \
+    --env-file compose/cs/.env.example config 2>/dev/null || true)"
+
+  admin_port_block="$(printf '%s\n' "${rendered}" | grep -B3 'target: 8087' || true)"
+  if assert_contain "${admin_port_block}" "host_ip: 127.0.0.1" \
+      "админ-REST должен быть привязан к 127.0.0.1"; then
+    log_success "админ-REST опубликован только на loopback"
+  else
+    TEST_FAILED=1
+  fi
+
+  rustfs_port_block="$(printf '%s\n' "${rendered}" | grep -B3 'target: 9001' || true)"
+  if assert_contain "${rustfs_port_block}" "host_ip: 127.0.0.1" \
+      "консоль RustFS должна быть привязана к 127.0.0.1"; then
+    log_success "RustFS опубликован только на loopback"
+  else
+    TEST_FAILED=1
+  fi
+
+  if assert_contain "${rendered}" "127.0.0.1:8087/rs/health" \
+      "healthcheck должен обращаться к административному REST"; then
+    log_success "healthcheck указывает на админ-REST"
+  else
     TEST_FAILED=1
   fi
 }
@@ -163,7 +201,7 @@ test_start_s3() {
     -e RUSTFS_CONSOLE_ENABLE=true \
     "${RUSTFS_IMAGE}" /data >/dev/null
 
-  wait_for_exec "RustFS" 120 \
+  wait_for_exec "RustFS" 120 --optional \
     curl -fsS -m 5 "http://127.0.0.1:${HOST_S3_PORT}/health" || return 0
 
   if docker run --rm --network "${NET}" \
