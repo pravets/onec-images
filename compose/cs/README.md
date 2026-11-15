@@ -62,11 +62,11 @@ docker compose up -d
 docker compose logs -f server
 ```
 
-Проверка готовности (переменные берутся из `.env`):
+Проверка готовности (переменные берутся из окружения контейнера, `.env` не
+исполняется как shell-скрипт):
 
 ```bash
-set -a; . ./.env; set +a
-curl -u "admin:${CS_ADMIN_PASSWORD}" http://localhost:8087/rs/health
+docker compose exec server sh -c 'curl -u "admin:${CS_ADMIN_PASSWORD}" http://127.0.0.1:8087/rs/health'
 ```
 
 Ожидаемо после работы сервиса `init`:
