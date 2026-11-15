@@ -5,6 +5,9 @@ on:
     tags:
       - 'cs_*'   # например cs_30.0.42 — собрать и опубликовать все образы семейства cs-*
 
+permissions:
+  contents: read
+
 jobs:
   build:
     if: ${{ !github.event.repository.fork }}
@@ -18,6 +21,8 @@ jobs:
       ONEC_PASSWORD: ${{ secrets.ONEC_PASSWORD }}
       # Версия CS: из тега cs_<версия>
       CS_VERSION: ${{ github.ref_name }}
+      # Публикуем только после успешного сквозного теста стека
+      PUSH_IMAGE: 'false'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,7 +33,7 @@ jobs:
       - name: Resolve CS version
         run: echo "CS_VERSION=${CS_VERSION#cs_}" >> "${GITHUB_ENV}"
 
-      - name: Build, test and push CS images
+      - name: Build and test CS images (no push)
         run: |
           set -euo pipefail
           ./src/build-cs-base.sh
@@ -40,3 +45,21 @@ jobs:
 
       - name: Stack smoke test
         run: ./tests/test-cs-stack.sh
+
+      # Публикация — только если все образы собрались и стек прошёл проверку.
+      - name: Login to registry
+        run: |
+          set -euo pipefail
+          echo "${DOCKER_PASSWORD}" | docker login "${DOCKER_REGISTRY_URL}" \
+            --username "${DOCKER_LOGIN}" --password-stdin
+
+      - name: Push CS images
+        run: |
+          set -euo pipefail
+          for image in cs-base cs-hazelcast cs-elasticsearch cs-server cs-site cs-web-chat; do
+            docker push "${DOCKER_REGISTRY_URL}/${image}:${CS_VERSION}"
+          done
+
+      - name: Cleanup
+        if: always()
+        run: ./scripts/cleanup.sh || true
