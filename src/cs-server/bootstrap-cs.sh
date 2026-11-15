@@ -15,7 +15,7 @@ source /usr/local/lib/cs/lib-cs.sh
 CS_ADMIN_HOST="${CS_ADMIN_HOST:-127.0.0.1}"
 CS_ADMIN_PORT="${CS_ADMIN_PORT:-8087}"
 CS_ADMIN_USER="${CS_ADMIN_USER:-admin}"
-CS_ADMIN_PASSWORD="${CS_ADMIN_PASSWORD:-admin}"
+: "${CS_ADMIN_PASSWORD:?задайте CS_ADMIN_PASSWORD (пароль административного REST)}"
 CS_BOOTSTRAP="${CS_BOOTSTRAP:-once}"
 CS_BOOTSTRAP_STRICT="${CS_BOOTSTRAP_STRICT:-false}"
 BOOTSTRAP_FAILED=0
@@ -80,9 +80,13 @@ fi
 if [ -n "${CS_DB_URL:-}" ]; then
     : "${CS_DB_USER:?CS_DB_USER обязателен при заданном CS_DB_URL}"
     : "${CS_DB_PASSWORD:?CS_DB_PASSWORD обязателен при заданном CS_DB_URL}"
-    register /admin/bucket_server "${CS_DB_URL}" \
-        "{\"url\":\"$(json_escape "${CS_DB_URL}")\",\"username\":\"$(json_escape "${CS_DB_USER}")\",\"password\":\"$(json_escape "${CS_DB_PASSWORD}")\",\"enabled\":true}" \
-        "основная БД"
+    db_payload="$(jq -cn \
+        --arg url "${CS_DB_URL}" \
+        --arg user "${CS_DB_USER}" \
+        --arg password "${CS_DB_PASSWORD}" \
+        '{url:$url, username:$user, password:$password, enabled:true}')" \
+        || die "не удалось собрать JSON для регистрации БД"
+    register /admin/bucket_server "${CS_DB_URL}" "${db_payload}" "основная БД"
 else
     warn "CS_DB_URL не задан — основная БД не регистрируется"
 fi
@@ -98,8 +102,25 @@ if [ -n "${CS_S3_ENDPOINT:-}" ]; then
     s3_signature="${CS_S3_SIGNATURE_VERSION:-V4}"
     s3_limit="${CS_S3_FILE_SIZE_LIMIT:-1073741824}"
     s3_days="${CS_S3_DAYS_TO_KEEP:-31}"
-    register /admin/storage_server "${s3_bucket}" \
-        "{\"apiType\":\"AMAZON\",\"storageType\":\"DEFAULT\",\"baseUrl\":\"$(json_escape "${CS_S3_ENDPOINT}")\",\"containerUrl\":\"$(json_escape "${CS_S3_ENDPOINT}/${s3_bucket}")\",\"containerName\":\"$(json_escape "${s3_bucket}")\",\"region\":\"$(json_escape "${s3_region}")\",\"accessKeyId\":\"$(json_escape "${CS_S3_ACCESS_KEY}")\",\"secretKey\":\"$(json_escape "${CS_S3_SECRET_KEY}")\",\"signatureVersion\":\"$(json_escape "${s3_signature}")\",\"uploadLimit\":${s3_limit},\"downloadLimit\":${s3_limit},\"fileSizeLimit\":${s3_limit},\"bytesToKeep\":0,\"daysToKeep\":${s3_days},\"pathStyleAccessEnabled\":true}" \
+    s3_limit="$(json_int CS_S3_FILE_SIZE_LIMIT "${s3_limit}")"
+    s3_days="$(json_int CS_S3_DAYS_TO_KEEP "${s3_days}")"
+    s3_payload="$(jq -cn \
+        --arg baseUrl "${CS_S3_ENDPOINT}" \
+        --arg containerUrl "${CS_S3_ENDPOINT}/${s3_bucket}" \
+        --arg containerName "${s3_bucket}" \
+        --arg region "${s3_region}" \
+        --arg accessKeyId "${CS_S3_ACCESS_KEY}" \
+        --arg secretKey "${CS_S3_SECRET_KEY}" \
+        --arg signatureVersion "${s3_signature}" \
+        --argjson limit "${s3_limit}" \
+        --argjson days "${s3_days}" \
+        '{apiType:"AMAZON", storageType:"DEFAULT", baseUrl:$baseUrl,
+          containerUrl:$containerUrl, containerName:$containerName, region:$region,
+          accessKeyId:$accessKeyId, secretKey:$secretKey, signatureVersion:$signatureVersion,
+          uploadLimit:$limit, downloadLimit:$limit, fileSizeLimit:$limit,
+          bytesToKeep:0, daysToKeep:$days, pathStyleAccessEnabled:true}')" \
+        || die "не удалось собрать JSON для регистрации S3"
+    register /admin/storage_server "${s3_bucket}" "${s3_payload}" \
         "S3-хранилище (${CS_S3_ENDPOINT}/${s3_bucket})"
 else
     log "CS_S3_ENDPOINT не задан — S3-хранилище не регистрируется"
@@ -109,8 +130,14 @@ fi
 # 3. Медиасервер Janus (внешний)
 # ---------------------------------------------------------------------------
 if [ -n "${CS_MEDIA_SERVER_URL:-}" ]; then
-    register /admin/media_server "${CS_MEDIA_SERVER_URL}" \
-        "{\"url\":\"$(json_escape "${CS_MEDIA_SERVER_URL}")\",\"name\":\"$(json_escape "${CS_MEDIA_SERVER_NAME:-Janus 1}")\",\"confereeLimit\":${CS_MEDIA_CONFEREE_LIMIT:-1000},\"enabled\":true}" \
+    media_limit="$(json_int CS_MEDIA_CONFEREE_LIMIT "${CS_MEDIA_CONFEREE_LIMIT:-1000}")"
+    media_payload="$(jq -cn \
+        --arg url "${CS_MEDIA_SERVER_URL}" \
+        --arg name "${CS_MEDIA_SERVER_NAME:-Janus 1}" \
+        --argjson limit "${media_limit}" \
+        '{url:$url, name:$name, confereeLimit:$limit, enabled:true}')" \
+        || die "не удалось собрать JSON для регистрации медиасервера"
+    register /admin/media_server "${CS_MEDIA_SERVER_URL}" "${media_payload}" \
         "медиасервер ${CS_MEDIA_SERVER_URL}"
 else
     log "CS_MEDIA_SERVER_URL не задан — видеосвязь не подключена"
@@ -120,8 +147,13 @@ fi
 # 4. TURN/STUN для медиасоединений (внешний coturn)
 # ---------------------------------------------------------------------------
 if [ -n "${CS_TURN_URL:-}" ]; then
-    register /admin/bucket_server "${CS_TURN_URL}" \
-        "{\"url\":\"$(json_escape "${CS_TURN_URL}")\",\"username\":\"$(json_escape "${CS_TURN_USER:-}")\",\"password\":\"$(json_escape "${CS_TURN_PASSWORD:-}")\",\"enabled\":true}" \
+    turn_payload="$(jq -cn \
+        --arg url "${CS_TURN_URL}" \
+        --arg username "${CS_TURN_USER:-}" \
+        --arg password "${CS_TURN_PASSWORD:-}" \
+        '{url:$url, username:$username, password:$password, enabled:true}')" \
+        || die "не удалось собрать JSON для регистрации TURN/STUN"
+    register /admin/bucket_server "${CS_TURN_URL}" "${turn_payload}" \
         "TURN/STUN ${CS_TURN_URL}"
 else
     log "CS_TURN_URL не задан — TURN/STUN не регистрируется"
