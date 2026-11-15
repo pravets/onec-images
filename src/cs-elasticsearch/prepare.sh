@@ -24,7 +24,7 @@ if [ -n "${CS_ES_DISCOVERY_HOSTS:-}" ]; then
     for host in "${hosts[@]}"; do
         [ -n "${host}" ] || continue
         ring elasticsearch --instance "${ES_INSTANCE_NAME}" discovery add-host "${host}" \
-            || warn "не удалось добавить узел Elasticsearch ${host}"
+            || die "не удалось добавить узел Elasticsearch ${host}"
     done
 fi
 
