@@ -108,8 +108,32 @@ test_check_configuration() {
   check_configuration
 }
 
+test_requires_admin_password() {
+  log_header "Test :: без CS_ADMIN_PASSWORD подготовка завершается ошибкой"
+  local name="cs-server-nopwd-$$" out
+
+  docker rm -f "${name}" >/dev/null 2>&1 || true
+  if docker run --name "${name}" \
+      -e CS_DB_URL='jdbc:postgresql://db.example:5432/cs_db?currentSchema=public' \
+      -e CS_DB_USER=db_user \
+      -e CS_DB_PASSWORD=db_pass \
+      "${TAG}" sleep 2 >/dev/null 2>&1; then
+    log_failure "контейнер без CS_ADMIN_PASSWORD не должен запускаться"
+    TEST_FAILED=1
+  else
+    out="$(docker logs "${name}" 2>&1 || true)"
+    if assert_contain "${out}" "CS_ADMIN_PASSWORD" "в логе должно быть указание на CS_ADMIN_PASSWORD"; then
+      log_success "запуск без пароля администратора отклонён"
+    else
+      TEST_FAILED=1
+    fi
+  fi
+  docker rm -f "${name}" >/dev/null 2>&1 || true
+}
+
 test_start_container || true
 test_check_configuration || true
+test_requires_admin_password || true
 
 if [ -n "${CI:-}" ]; then
   exit "${TEST_FAILED}"
