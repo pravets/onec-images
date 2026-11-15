@@ -77,7 +77,9 @@ onec-images/
 - Экземпляр создаётся в `prepare.d/*.sh` (от root, т.к. `ring` пишет в `/etc/1C/1CE`), затем процесс запускается от пользователя `cs` через `gosu`; `tini` — PID 1.
 - Имена экземпляров: `cs`, `hazelcast`, `elasticsearch`; каталоги — `/var/cs/cs_instance`, `/var/cs/hazelcast_instance`, `/var/cs/elasticsearch_instance`.
 - Elasticsearch по умолчанию слушает только `127.0.0.1` — в `prepare.sh` добавляется `network.host: 0.0.0.0`, а также `path.data`/`path.logs` и `bootstrap.system_call_filter`.
-- `cs-site` и `cs-web-chat` — статические SPA из компонентов `1c-cs-site` / `1c-cs-web-chat`; собираются на `nginx:alpine` без Java. Статика копируется из уже установленного `cs-base` (установщик распаковывает `.car` в каталог компонента), поэтому дистрибутив для них повторно не скачивается; `config.json` формируется при старте из `CS_PUBLIC_WS_URL`.
+- `cs-site` и `cs-web-chat` — статические SPA из компонентов `1c-cs-site` / `1c-cs-web-chat`; собираются на `nginx:1.27-alpine` без Java. Статика копируется из уже установленного `cs-base` (установщик распаковывает `.car` в каталог компонента), поэтому дистрибутив для них повторно не скачивается; `config.json` формируется при старте из `CS_PUBLIC_WS_URL`. В образы ставится `bash`: startup-хук `render-site-config.sh` — обычный bash-скрипт со строгим режимом, а в alpine bash нет.
+- Админ-REST (`cs-server`) требует `CS_ADMIN_PASSWORD` при запуске: значения по умолчанию в образе нет. Пароль группы Hazelcast также не хранится в `ENV` образов — задаётся при запуске (дефолт для разработки остаётся в `prepare.sh`).
+- В compose админ-REST и RustFS публикуются только на loopback (`CS_ADMIN_BIND_ADDRESS`, `RUSTFS_BIND_ADDRESS`), а зависимости `server` от встроенных Hazelcast/Elasticsearch помечены `required: false` — сценарий «всё внешнее» запускается как `docker compose up -d --no-deps server init`.
 - Регистрация зависимостей (СУБД, S3, Janus, TURN) — `bootstrap-cs.sh` через административный REST, идемпотентно (`CS_BOOTSTRAP=once|always|never`), выполняется сервисом `init` в compose.
 - PostgreSQL, Janus и TURN/STUN — **только внешние**.
 
@@ -198,6 +200,8 @@ cp .env.example .env
 `CS_WS_PORT`/`CS_WS_WSS`, `CS_HAZELCAST_*`, `CS_ES_*`, `CS_S3_*`, `CS_MEDIA_*`, `CS_TURN_*`,
 `CS_PUBLIC_URL`, `CS_PUBLIC_WS_URL`, `CS_VIDEO_ENABLED`, `CS_LOG_CONSOLE`/`CS_LOG_LEVEL`,
 `CS_ADMIN_HOST` (адрес админ-REST для `bootstrap-cs.sh`; `init` в compose использует имя сервиса `server`),
+`CS_ADMIN_BIND_ADDRESS`/`RUSTFS_BIND_ADDRESS` (bind-адрес публикации в compose, по умолчанию `127.0.0.1`),
+`CS_HAZELCAST_MEMBERS`/`CS_ES_DISCOVERY_HOSTS` (участники встроенных кластеров),
 `CS_BOOTSTRAP`/`CS_BOOTSTRAP_STRICT`.
 
 ## Как собирать образы локально
