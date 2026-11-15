@@ -17,6 +17,10 @@ RUN mkdir -p /payload \
 
 FROM nginx:1.27-alpine
 
+# bash нужен startup-хуку render-site-config.sh: в alpine его нет, а правила
+# репозитория требуют bash-скрипты со строгим режимом.
+RUN apk add --no-cache bash
+
 ARG CS_VERSION
 ARG BUILD_DATE
 
