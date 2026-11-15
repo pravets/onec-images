@@ -15,7 +15,6 @@ source /usr/local/lib/cs/lib-cs.sh
 CS_ADMIN_HOST="${CS_ADMIN_HOST:-127.0.0.1}"
 CS_ADMIN_PORT="${CS_ADMIN_PORT:-8087}"
 CS_ADMIN_USER="${CS_ADMIN_USER:-admin}"
-: "${CS_ADMIN_PASSWORD:?задайте CS_ADMIN_PASSWORD (пароль административного REST)}"
 CS_BOOTSTRAP="${CS_BOOTSTRAP:-once}"
 CS_BOOTSTRAP_STRICT="${CS_BOOTSTRAP_STRICT:-false}"
 BOOTSTRAP_FAILED=0
@@ -40,6 +39,10 @@ case "${CS_BOOTSTRAP}" in
         die "недопустимое значение CS_BOOTSTRAP='${CS_BOOTSTRAP}' (once|always|never)"
         ;;
 esac
+
+# Пароль нужен только для реальных запросов: режимы never и уже выполненный once
+# выходят раньше, поэтому проверка стоит после выбора режима.
+: "${CS_ADMIN_PASSWORD:?задайте CS_ADMIN_PASSWORD (пароль административного REST)}"
 
 # Уровень ошибок: строгий режим валит контейнер, мягкий — только предупреждает.
 # В мягком режиме маркер не выставляется, чтобы регистрация повторилась.
