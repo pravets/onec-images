@@ -16,8 +16,9 @@ LABEL maintainer="Iosif Pravets <i@pravets.ru>" \
 COPY src/cs-hazelcast/prepare.sh /usr/local/lib/cs/prepare.d/10-cs-hazelcast.sh
 RUN chmod +x /usr/local/lib/cs/prepare.d/10-cs-hazelcast.sh
 
-ENV CS_HAZELCAST_GROUP_NAME=1ce-cs \
-    CS_HAZELCAST_GROUP_PASSWORD=cs-pass
+# Пароль группы задаётся при запуске (CS_HAZELCAST_GROUP_PASSWORD) и не хранится
+# в метаданных образа. Значение по умолчанию для разработки — в prepare.sh.
+ENV CS_HAZELCAST_GROUP_NAME=1ce-cs
 
 EXPOSE 5701
 
