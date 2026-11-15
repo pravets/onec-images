@@ -104,7 +104,7 @@ test_compose_valid() {
   # Админ-REST и RustFS не должны публиковаться на всех интерфейсах хоста.
   local rendered admin_port_block rustfs_port_block
   rendered="$(cd "${REPO_ROOT}" && docker compose -f compose/cs/compose.yaml \
-    --env-file compose/cs/.env.example config 2>/dev/null || true)"
+    --env-file compose/cs/.env.example --profile s3 config 2>/dev/null || true)"
 
   admin_port_block="$(printf '%s\n' "${rendered}" | grep -B3 'target: 8087' || true)"
   if assert_contain "${admin_port_block}" "host_ip: 127.0.0.1" \
