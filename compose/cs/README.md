@@ -62,10 +62,11 @@ docker compose up -d
 docker compose logs -f server
 ```
 
-Проверка готовности:
+Проверка готовности (переменные берутся из `.env`):
 
 ```bash
-curl -u admin:"$CS_ADMIN_PASSWORD" http://localhost:8087/rs/health
+set -a; . ./.env; set +a
+curl -u "admin:${CS_ADMIN_PASSWORD}" http://localhost:8087/rs/health
 ```
 
 Ожидаемо после работы сервиса `init`:
@@ -149,7 +150,13 @@ CS_TURN_URL=turn:turn.prod:3478
 
 ### 3. Всё внешнее
 
-Поднимается только `server`; Hazelcast и Elasticsearch указываются адресами:
+Поднимается только `server` (и разовый `init`); Hazelcast и Elasticsearch
+указываются адресами. Встроенные сервисы при этом не запускаются — зависимости
+`server` от них помечены `required: false`, а `--no-deps` отключает их запуск:
+
+```bash
+docker compose up -d --no-deps server init
+```
 
 ```ini
 CS_HAZELCAST_ADDRESSES=hc1.prod,hc2.prod
@@ -162,6 +169,17 @@ CS_ES_CLUSTER_NAME=1ce-cs
 Для внешнего кластера Hazelcast участников задают в самом кластере; для CS
 достаточно списка адресов. Имя группы и пароль **должны совпадать** у CS и
 Hazelcast, иначе клиент CS не попадёт в кластер.
+
+### Порты и многоузловой режим
+
+Внутренние порты CS задаются `CS_WS_PORT`, `CS_ADMIN_PORT`,
+`CS_INTEGRATION_PORT`, `CS_CONFERENCE_PORT`; публикация на хосте — через
+`CS_*_HOST_PORT`. Админ-REST и RustFS привязаны к loopback
+(`CS_ADMIN_BIND_ADDRESS`, `RUSTFS_BIND_ADDRESS`).
+
+Участники кластера для встроенных сервисов: `CS_HAZELCAST_MEMBERS`
+(`host:5701` через запятую) и `CS_ES_DISCOVERY_HOSTS` (`host:9300`) — compose
+передаёт их сервисам `hazelcast` и `elasticsearch`.
 
 ## Подключение информационной базы 1С
 
@@ -251,10 +269,15 @@ curl -u admin:"$CS_ADMIN_PASSWORD" -L -X POST \
 
 ## Безопасность
 
-- Смените `CS_ADMIN_PASSWORD` (по умолчанию в образах `admin`/`admin`).
-- Смените `CS_HAZELCAST_GROUP_PASSWORD` и пароли S3 и TURN.
-- Не публикуйте порты 8087 (админ-REST), 9000/9001 (RustFS) и 9200 наружу —
-  в `compose.yaml` они доступны только внутри сети стека, наружу опубликован
-  лишь RustFS в профиле `s3`.
+- `CS_ADMIN_PASSWORD` обязателен: значения по умолчанию в образе нет, без него
+  контейнер `server` не подготовит конфигурацию.
+- Смените `CS_HAZELCAST_GROUP_PASSWORD`, пароли S3 и TURN — в образах их нет,
+  они передаются только при запуске.
+- Админ-REST публикуется **только на loopback хоста** (`CS_ADMIN_BIND_ADDRESS`,
+  по умолчанию `127.0.0.1`); снаружи — через обратный прокси или SSH-туннель.
+  Порт `8087` не выставляйте в интернет: это HTTP с Basic-аутентификацией.
+- RustFS (`--profile s3`) также публикуется только на loopback
+  (`RUSTFS_BIND_ADDRESS`, по умолчанию `127.0.0.1`) и **требует** замены
+  `CS_S3_SECRET_KEY` до первого запуска: значение из примера — не секрет.
 - Терминируйте TLS на обратном прокси; наружу отдавайте только 8086/8443
   (или прокси-порты).
