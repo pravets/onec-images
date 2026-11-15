@@ -72,8 +72,29 @@ test_config_json() {
   fi
 }
 
+test_security_headers() {
+  log_header "Test :: защитные заголовки в ответах"
+  local path headers
+  for path in "/" "/config.json" "/index.html"; do
+    headers="$(docker exec "${CONTAINER}" wget -S -O /dev/null "http://127.0.0.1${path}" 2>&1 || true)"
+    if assert_contain "${headers}" "X-Content-Type-Options: nosniff" \
+        "nosniff должен отдаваться для ${path}"; then
+      log_success "X-Content-Type-Options для ${path}"
+    else
+      TEST_FAILED=1
+    fi
+    if assert_contain "${headers}" "X-Frame-Options: SAMEORIGIN" \
+        "X-Frame-Options должен отдаваться для ${path}"; then
+      log_success "X-Frame-Options для ${path}"
+    else
+      TEST_FAILED=1
+    fi
+  done
+}
+
 test_serves_frontend || true
 test_config_json || true
+test_security_headers || true
 
 if [ -n "${CI:-}" ]; then
   exit "${TEST_FAILED}"
