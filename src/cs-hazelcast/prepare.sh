@@ -29,7 +29,7 @@ if [ -n "${CS_HAZELCAST_MEMBERS:-}" ]; then
         --multicast-enabled false \
         --tcp-ip-enabled true \
         --tcp-ip-members "${CS_HAZELCAST_MEMBERS}" \
-        || warn "не удалось задать участников кластера Hazelcast (${CS_HAZELCAST_MEMBERS})"
+        || die "не удалось задать участников кластера Hazelcast (${CS_HAZELCAST_MEMBERS})"
 fi
 
 chown -R "${CS_USER}:${CS_USER}" "${INSTANCE_DIR}"
