@@ -26,7 +26,6 @@ ENV CS_WS_HOSTNAME=0.0.0.0 \
     CS_ADMIN_ADDRESS=0.0.0.0 \
     CS_ADMIN_PORT=8087 \
     CS_ADMIN_USER=admin \
-    CS_ADMIN_PASSWORD=admin \
     CS_INTEGRATION_PORT=8443 \
     CS_CONFERENCE_ADDRESS=0.0.0.0 \
     CS_CONFERENCE_PORT=8444 \
@@ -34,10 +33,13 @@ ENV CS_WS_HOSTNAME=0.0.0.0 \
     CS_ES_CLUSTER_NAME=1ce-cs \
     CS_HAZELCAST_ADDRESSES=hazelcast \
     CS_HAZELCAST_GROUP_NAME=1ce-cs \
-    CS_HAZELCAST_GROUP_PASSWORD=cs-pass \
     CS_LOG_CONSOLE=true \
     CS_LOG_LEVEL=WARN \
     CS_VIDEO_ENABLED=false
+
+# CS_ADMIN_PASSWORD и CS_HAZELCAST_GROUP_PASSWORD намеренно не задаются здесь:
+# секреты передаются при запуске. Без CS_ADMIN_PASSWORD подготовка завершится
+# ошибкой с подсказкой.
 
 # WebSocket для клиентов, административный REST, интеграция, endpoint конференций
 EXPOSE 8086 8087 8443 8444
