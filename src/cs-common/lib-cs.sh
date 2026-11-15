@@ -133,7 +133,7 @@ cs_admin_post() {
     local base; base="$(cs_admin_base)"
     curl -Ssf -m 30 -X POST \
         -H 'Content-Type: application/json' \
-        -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:-admin}" \
+        -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:?CS_ADMIN_PASSWORD не задан}" \
         -d "${payload}" \
         "${base}${path}"
 }
@@ -143,7 +143,7 @@ cs_admin_get() {
     local path="$1"
     local base; base="$(cs_admin_base)"
     curl -Ssf -m 30 \
-        -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:-admin}" \
+        -u "${CS_ADMIN_USER:-admin}:${CS_ADMIN_PASSWORD:?CS_ADMIN_PASSWORD не задан}" \
         "${base}${path}"
 }
 
@@ -152,13 +152,12 @@ json_has_value() {
     printf '%s' "$1" | grep -qF -- "$2"
 }
 
-# json_escape <value> — экранирует строку для подстановки в JSON-литерал.
-json_escape() {
-    local value="$1"
-    value="${value//\\/\\\\}"
-    value="${value//\"/\\\"}"
-    value="${value//$'\n'/\\n}"
-    value="${value//$'\r'/\\r}"
-    value="${value//$'\t'/\\t}"
+# json_int <имя переменной> <значение> — проверяет, что значение — целое число.
+# Используется перед --argjson в jq: иначе jq упадёт с невнятной ошибкой.
+json_int() {
+    local name="$1" value="$2"
+    case "${value}" in
+        ''|*[!0-9]*) die "${name}='${value}' должно быть целым числом" ;;
+    esac
     printf '%s' "${value}"
 }
